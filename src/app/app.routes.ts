@@ -43,6 +43,16 @@ export const routes: Routes = [
         loadComponent: () => import('./features/trips/trip-list').then((m) => m.TripList),
       },
       {
+        path: 'viagens/nova',
+        title: 'Nova viagem | Skyfare',
+        loadComponent: () => import('./features/trips/trip-form').then((m) => m.TripForm),
+      },
+      {
+        path: 'viagens/:id/editar',
+        title: 'Editar viagem | Skyfare',
+        loadComponent: () => import('./features/trips/trip-form').then((m) => m.TripForm),
+      },
+      {
         path: 'viagens/:id',
         title: 'Detalhe da viagem | Skyfare',
         loadComponent: () => import('./features/trips/trip-detail').then((m) => m.TripDetail),
