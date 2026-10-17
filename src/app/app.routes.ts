@@ -62,6 +62,11 @@ export const routes: Routes = [
         title: 'Dashboard | Skyfare',
         loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
       },
+      {
+        path: 'admin/usuarios',
+        title: 'Usuários | Skyfare',
+        loadComponent: () => import('./features/admin/users').then((m) => m.Users),
+      },
     ],
   },
 ];
