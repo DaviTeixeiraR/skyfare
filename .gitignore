@@ -1,0 +1,23 @@
+# Dependências
+node_modules/
+
+# Build e cache do Angular
+dist/
+out-tsc/
+.angular/
+coverage/
+
+# IDEs
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs e variáveis de ambiente
+*.log
+.env
