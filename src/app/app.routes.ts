@@ -73,6 +73,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/errors/forbidden').then((m) => m.Forbidden),
       },
       {
+        path: 'guia-de-estilo',
+        title: 'Guia de estilo | Skyfare',
+        loadComponent: () =>
+          import('./features/style-guide/style-guide').then((m) => m.StyleGuide),
+      },
+      {
         path: '**',
         title: 'Página não encontrada | Skyfare',
         loadComponent: () => import('./features/errors/not-found').then((m) => m.NotFound),
