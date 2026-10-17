@@ -42,6 +42,11 @@ export const routes: Routes = [
         title: 'Minhas viagens | Skyfare',
         loadComponent: () => import('./features/trips/trip-list').then((m) => m.TripList),
       },
+      {
+        path: 'viagens/:id',
+        title: 'Detalhe da viagem | Skyfare',
+        loadComponent: () => import('./features/trips/trip-detail').then((m) => m.TripDetail),
+      },
     ],
   },
 ];
