@@ -37,6 +37,11 @@ export const routes: Routes = [
         title: 'Skyfare',
         loadComponent: () => import('./features/home/home').then((m) => m.Home),
       },
+      {
+        path: 'viagens',
+        title: 'Minhas viagens | Skyfare',
+        loadComponent: () => import('./features/trips/trip-list').then((m) => m.TripList),
+      },
     ],
   },
 ];
