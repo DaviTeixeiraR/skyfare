@@ -67,6 +67,16 @@ export const routes: Routes = [
         title: 'Usuários | Skyfare',
         loadComponent: () => import('./features/admin/users').then((m) => m.Users),
       },
+      {
+        path: 'acesso-negado',
+        title: 'Acesso negado | Skyfare',
+        loadComponent: () => import('./features/errors/forbidden').then((m) => m.Forbidden),
+      },
+      {
+        path: '**',
+        title: 'Página não encontrada | Skyfare',
+        loadComponent: () => import('./features/errors/not-found').then((m) => m.NotFound),
+      },
     ],
   },
 ];
