@@ -7,6 +7,13 @@ export const routes: Routes = [
   {
     path: '',
     component: MainLayout,
-    children: [],
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        title: 'Skyfare',
+        loadComponent: () => import('./features/home/home').then((m) => m.Home),
+      },
+    ],
   },
 ];
