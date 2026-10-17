@@ -49,7 +49,26 @@ Angular, TypeScript, RxJS, signals, formulários reativos, guards de rota, lazy 
 
 ## Como rodar
 
-Instruções serão adicionadas quando o projeto Angular for criado.
+Requisitos: Node.js 22 ou superior.
+
+```bash
+npm install
+npm start
+```
+
+Depois abra http://localhost:4200.
+
+> **Situação atual (Trabalho 01, protótipo):** as 10 telas já estão prontas em Angular, com dados fictícios (`src/app/core/mock`). A ligação com as APIs, o JSON-Server e os guards de rota fica para a próxima etapa. O guia de estilo está em http://localhost:4200/guia-de-estilo.
+
+## Estrutura
+
+```
+src/app/
+  core/        modelos, utilitários e dados fictícios
+  layout/      layout principal (navegação) e de autenticação
+  shared/      componentes reutilizáveis (cartões de clima e câmbio, busca, gráficos, ícones)
+  features/    telas: auth, home, trips, dashboard, admin, errors, style-guide
+```
 
 ## Fluxo de trabalho
 
@@ -59,6 +78,7 @@ Instruções serão adicionadas quando o projeto Angular for criado.
 ## Documentos
 
 - [Trabalho 00: relatório parcial e Kanban](docs/trabalho-00/)
+- [Trabalho 01: protótipo, relatório e Kanban](docs/trabalho-01/)
 
 ## Autor
 
