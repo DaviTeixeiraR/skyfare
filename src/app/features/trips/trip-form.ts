@@ -9,8 +9,13 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { CIDADES, COTACOES, MOEDA_POR_PAIS, VIAGENS } from '../../core/mock/mock-data';
+import { BusinessError } from '../../core/errors';
 import { City } from '../../core/models';
+import { AuthService } from '../../core/services/auth.service';
+import { CityService } from '../../core/services/city.service';
+import { ExchangeService } from '../../core/services/exchange.service';
+import { ToastService } from '../../core/services/toast.service';
+import { TripService } from '../../core/services/trip.service';
 import { CitySearch } from '../../shared/components/city-search';
 import { Flag } from '../../shared/components/flag';
 import { Icon } from '../../shared/components/icon';
@@ -26,6 +31,13 @@ function returnAfterDeparture(group: AbstractControl): ValidationErrors | null {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, RouterLink, CitySearch, Flag, Icon, CurrencyPipe],
   template: `
+    @if (notFound()) {
+      <div class="card flex flex-col items-center gap-3 p-12 text-center">
+        <p class="font-semibold text-navy-900">Viagem não encontrada</p>
+        <p class="text-sm text-slate-500">Ela pode ter sido excluída ou pertencer a outra conta.</p>
+        <a routerLink="/viagens" class="btn btn-primary">Voltar para Minhas viagens</a>
+      </div>
+    } @else {
     <a routerLink="/viagens" class="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-navy-900">
       <app-icon name="arrow-left" [size]="16" /> Minhas viagens
     </a>
@@ -130,16 +142,31 @@ function returnAfterDeparture(group: AbstractControl): ValidationErrors | null {
         </section>
       </aside>
     </div>
+    }
   `,
 })
 export class TripForm {
   /** Presente apenas na rota /viagens/:id/editar. */
   readonly id = input<string>();
+  /** Vem de ?cidade=<id> (botão "Salvar como viagem" da busca): já escolhe o destino. */
+  readonly cidade = input<string>();
 
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
+  private readonly trips = inject(TripService);
+  private readonly cities = inject(CityService);
+  private readonly exchange = inject(ExchangeService);
+  private readonly toast = inject(ToastService);
+
   protected readonly submitted = signal(false);
   protected readonly city = signal<City | null>(null);
   protected readonly editing = computed(() => !!this.id());
+
+  /** Viagem em edição. Só existe se for do usuário logado. */
+  private readonly current = computed(() =>
+    this.editing() ? this.trips.getOwnedBy(Number(this.id()), this.auth.user()?.id ?? 0) : undefined,
+  );
+  protected readonly notFound = computed(() => this.editing() && !this.current());
 
   protected readonly form = inject(NonNullableFormBuilder).group(
     {
@@ -153,8 +180,8 @@ export class TripForm {
 
   private readonly value = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
 
-  protected readonly currency = computed(() => MOEDA_POR_PAIS[this.city()?.codigoPais ?? ''] ?? '');
-  protected readonly rate = computed(() => COTACOES[this.currency()] ?? null);
+  protected readonly currency = computed(() => this.exchange.currencyOf(this.city()?.codigoPais ?? ''));
+  protected readonly rate = computed(() => this.exchange.getRate(this.currency()));
   protected readonly budget = computed(() => Number(this.value().orcamento) || 0);
   protected readonly days = computed(() => {
     const { dataIda, dataVolta } = this.value();
@@ -163,11 +190,27 @@ export class TripForm {
   });
 
   constructor() {
+    // No cadastro, a cidade pode vir pré-escolhida pela URL.
+    effect(() => {
+      const preset = this.cities.getById(Number(this.cidade()));
+      if (preset && !this.editing()) this.city.set(preset);
+    });
+
     // No modo edição, preenche o formulário com a viagem existente.
     effect(() => {
-      const trip = VIAGENS.find((t) => t.id === Number(this.id()));
+      const trip = this.current();
       if (!trip) return;
-      this.city.set(CIDADES.find((c) => c.id === trip.cityId) ?? null);
+      this.city.set(
+        this.cities.getById(trip.cityId) ?? {
+          id: trip.cityId,
+          nome: trip.cidade,
+          estado: trip.estado,
+          pais: trip.pais,
+          codigoPais: trip.codigoPais,
+          latitude: 0,
+          longitude: 0,
+        },
+      );
       this.form.setValue({
         dataIda: trip.dataIda,
         dataVolta: trip.dataVolta,
@@ -184,11 +227,25 @@ export class TripForm {
 
   protected submit() {
     this.submitted.set(true);
-    if (this.form.invalid || !this.city()) {
+    const city = this.city();
+    if (this.form.invalid || !city) {
       this.form.markAllAsTouched();
       return;
     }
-    // A gravação no JSON-Server entra na etapa de desenvolvimento.
+    const { dataIda, dataVolta, orcamento, observacoes } = this.form.getRawValue();
+    const input = { city, dataIda, dataVolta, orcamentoBRL: Number(orcamento), observacoes };
+    try {
+      if (this.current()) {
+        this.trips.update(this.current()!.id, input);
+        this.toast.success('Viagem atualizada.');
+      } else {
+        this.trips.create(this.auth.user()!.id, input);
+        this.toast.success('Viagem cadastrada.');
+      }
+    } catch (e) {
+      this.toast.error(e instanceof BusinessError ? e.message : 'Não foi possível salvar a viagem.');
+      return;
+    }
     this.router.navigateByUrl('/viagens');
   }
 }
