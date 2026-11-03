@@ -2,23 +2,20 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   linkedSignal,
   output,
   signal,
 } from '@angular/core';
-import { CIDADES } from '../../core/mock/mock-data';
 import { City } from '../../core/models';
+import { CityService } from '../../core/services/city.service';
 import { Flag } from './flag';
 import { Icon } from './icon';
 
-function normalize(text: string): string {
-  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-}
-
 /**
- * Busca de cidade com sugestões. No protótipo filtra uma lista fixa;
- * no desenvolvimento passa a usar a Open-Meteo Geocoding (debounceTime + switchMap).
+ * Busca de cidade com sugestões. As sugestões vêm do CityService; na etapa das APIs o
+ * service passa a consultar a Open-Meteo Geocoding (debounceTime + switchMap).
  */
 @Component({
   selector: 'app-city-search',
@@ -74,14 +71,12 @@ export class CitySearch {
   readonly initial = input('');
   readonly selected = output<City>();
 
+  private readonly cities = inject(CityService);
+
   protected readonly query = linkedSignal(() => this.initial());
   protected readonly open = signal(false);
 
-  protected readonly suggestions = computed(() => {
-    const q = normalize(this.query());
-    if (q.length < 2) return [];
-    return CIDADES.filter((c) => normalize(c.nome).startsWith(q)).slice(0, 6);
-  });
+  protected readonly suggestions = computed(() => this.cities.search(this.query()));
 
   protected onInput(value: string) {
     this.query.set(value);
