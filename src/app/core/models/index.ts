@@ -7,7 +7,16 @@ export interface User {
   perfil: Perfil;
   ativo: boolean;
   criadoEm: string; // ISO
-  viagens: number;
+  /** Senha em texto puro: existe somente nos dados fictícios, até a etapa do JSON-Server. */
+  senha?: string;
+}
+
+/** Dados informados no cadastro de uma conta. */
+export interface NewUser {
+  nome: string;
+  email: string;
+  senha: string;
+  perfil?: Perfil;
 }
 
 /** Cidade devolvida pela Open-Meteo Geocoding. */
@@ -41,6 +50,15 @@ export interface Trip {
   continente: Continente;
   moeda: string;
   dataIda: string; // ISO (aaaa-mm-dd)
+  dataVolta: string;
+  orcamentoBRL: number;
+  observacoes: string;
+}
+
+/** Dados do formulário de viagem. O destino é uma cidade da busca. */
+export interface TripInput {
+  city: City;
+  dataIda: string;
   dataVolta: string;
   orcamentoBRL: number;
   observacoes: string;
