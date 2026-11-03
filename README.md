@@ -96,6 +96,7 @@ src/app/
 
 - [Trabalho 00: relatório parcial e Kanban](docs/trabalho-00/)
 - [Trabalho 01: protótipo, relatório e Kanban](docs/trabalho-01/)
+- [Trabalho 02: relatório e Kanban](docs/trabalho-02/)
 
 ## Autor
 
