@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import {
@@ -6,11 +6,11 @@ import {
   CLIMA,
   CLIMA_PADRAO,
   COTACOES,
-  USUARIO_LOGADO,
-  USUARIOS,
-  VIAGENS,
 } from '../../core/mock/mock-data';
 import { Trip } from '../../core/models';
+import { AuthService } from '../../core/services/auth.service';
+import { TripService } from '../../core/services/trip.service';
+import { UserService } from '../../core/services/user.service';
 import { daysUntil, toDate, tripStatus } from '../../core/utils/trip-utils';
 import { weatherInfo } from '../../core/utils/weather-codes';
 import { ChartView } from '../../shared/components/chart';
@@ -137,20 +137,27 @@ const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL',
   `,
 })
 export class Dashboard {
-  protected readonly isAdmin = USUARIO_LOGADO.perfil === 'admin';
-  protected readonly users = USUARIOS;
-  protected readonly activeUsers = USUARIOS.filter((u) => u.ativo).length;
-  protected readonly totalTrips = USUARIOS.reduce((sum, u) => sum + u.viagens, 0);
+  private readonly auth = inject(AuthService);
+  private readonly tripService = inject(TripService);
+  private readonly userService = inject(UserService);
+
+  /** Viagens do usuário logado (a tela é recriada a cada visita, então já vem atualizada). */
+  private readonly trips = this.tripService.listByUser(this.auth.user()?.id ?? 0);
+
+  protected readonly isAdmin = this.auth.isAdmin();
+  protected readonly users = this.userService.users();
+  protected readonly activeUsers = this.userService.activeCount();
+  protected readonly totalTrips = this.tripService.total();
   protected readonly topCities = CIDADES_MAIS_PESQUISADAS;
 
-  protected readonly planned = VIAGENS.filter((t) => tripStatus(t) === 'futura').sort(
+  protected readonly planned = this.trips.filter((t) => tripStatus(t) === 'futura').sort(
     (a, b) => toDate(a.dataIda).getTime() - toDate(b.dataIda).getTime(),
   );
-  protected readonly done = VIAGENS.filter((t) => tripStatus(t) === 'realizada');
-  protected readonly nextDays = daysUntil(this.planned[0].dataIda);
+  protected readonly done = this.trips.filter((t) => tripStatus(t) === 'realizada');
+  protected readonly nextDays = this.planned[0] ? daysUntil(this.planned[0].dataIda) : 0;
   protected readonly plannedBudget = brl.format(this.planned.reduce((s, t) => s + t.orcamentoBRL, 0));
   protected readonly averageBudget = brl.format(
-    VIAGENS.reduce((s, t) => s + t.orcamentoBRL, 0) / VIAGENS.length,
+    this.trips.reduce((s, t) => s + t.orcamentoBRL, 0) / (this.trips.length || 1),
   );
 
   protected countdown = (t: Trip) => daysUntil(t.dataIda);
@@ -164,7 +171,7 @@ export class Dashboard {
     for (let i = 0; i < 14; i++) {
       const d = new Date(2026, 5 + i, 1);
       labels.push(`${MESES[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`);
-      const trips = VIAGENS.filter((t) => {
+      const trips = this.trips.filter((t) => {
         const ida = toDate(t.dataIda);
         return ida.getMonth() === d.getMonth() && ida.getFullYear() === d.getFullYear();
       });
@@ -191,7 +198,7 @@ export class Dashboard {
 
   protected readonly continentChart: ChartConfiguration = (() => {
     const counts = new Map<string, number>();
-    VIAGENS.forEach((t) => counts.set(t.continente, (counts.get(t.continente) ?? 0) + 1));
+    this.trips.forEach((t) => counts.set(t.continente, (counts.get(t.continente) ?? 0) + 1));
     return {
       type: 'doughnut',
       data: {

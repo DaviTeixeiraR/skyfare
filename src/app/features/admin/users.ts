@@ -1,7 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
-import { USUARIOS } from '../../core/mock/mock-data';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { BusinessError } from '../../core/errors';
 import { Perfil, User } from '../../core/models';
+import { AuthService } from '../../core/services/auth.service';
+import { ToastService } from '../../core/services/toast.service';
+import { TripService } from '../../core/services/trip.service';
+import { UserProfileFilter, UserService } from '../../core/services/user.service';
+import { ConfirmDialog } from '../../shared/components/confirm-dialog';
 import { Icon } from '../../shared/components/icon';
 import { StatCard } from '../../shared/components/stat-card';
 
@@ -9,7 +15,7 @@ import { StatCard } from '../../shared/components/stat-card';
 @Component({
   selector: 'app-users',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Icon, StatCard, DatePipe],
+  imports: [FormsModule, Icon, StatCard, ConfirmDialog, DatePipe],
   template: `
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
@@ -20,9 +26,9 @@ import { StatCard } from '../../shared/components/stat-card';
     </div>
 
     <div class="mt-6 grid gap-5 sm:grid-cols-3">
-      <app-stat-card icon="users" label="Usuários cadastrados" [value]="users().length + ''" />
-      <app-stat-card icon="circle-check" label="Contas ativas" [value]="activeCount() + ''" tone="bg-emerald-50 text-emerald-600" />
-      <app-stat-card icon="shield" label="Administradores" [value]="adminCount() + ''" tone="bg-indigo-50 text-indigo-600" />
+      <app-stat-card icon="users" label="Usuários cadastrados" [value]="userService.total() + ''" />
+      <app-stat-card icon="circle-check" label="Contas ativas" [value]="userService.activeCount() + ''" tone="bg-emerald-50 text-emerald-600" />
+      <app-stat-card icon="shield" label="Administradores" [value]="userService.adminCount() + ''" tone="bg-indigo-50 text-indigo-600" />
     </div>
 
     <section class="card mt-5 overflow-hidden">
@@ -30,11 +36,11 @@ import { StatCard } from '../../shared/components/stat-card';
         <label class="relative min-w-60 flex-1">
           <app-icon name="search" [size]="18" class="absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
           <input class="input !border-transparent !bg-slate-50 !pl-10" placeholder="Buscar por nome ou e-mail"
-                 [value]="search()" (input)="search.set($any($event.target).value)" />
+                 [(ngModel)]="search" />
         </label>
         <label class="flex items-center gap-2 text-sm font-medium text-slate-500">
           <app-icon name="funnel" [size]="16" />
-          <select class="input !w-auto !py-2" [value]="profile()" (change)="profile.set($any($event.target).value)">
+          <select class="input !w-auto !py-2" [(ngModel)]="profile">
             <option value="todos">Todos os perfis</option>
             <option value="usuario">Usuários</option>
             <option value="admin">Administradores</option>
@@ -61,23 +67,28 @@ import { StatCard } from '../../shared/components/stat-card';
                   <div class="flex items-center gap-3">
                     <span class="grid size-9 shrink-0 place-items-center rounded-full text-xs font-bold" [class]="avatarColor(u)">{{ initials(u) }}</span>
                     <div class="min-w-0">
-                      <p class="truncate font-semibold text-navy-900">{{ u.nome }}</p>
+                      <p class="truncate font-semibold text-navy-900">
+                        {{ u.nome }}
+                        @if (isSelf(u)) { <span class="badge ml-1 bg-brand-50 text-brand-700">você</span> }
+                      </p>
                       <p class="truncate text-xs text-slate-500">{{ u.email }}</p>
                     </div>
                   </div>
                 </td>
                 <td class="px-5 py-3.5">
-                  <select class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium focus:border-brand-500 focus:outline-none"
-                          [value]="u.perfil" (change)="setProfile(u, $any($event.target).value)">
+                  <select class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium focus:border-brand-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                          [value]="u.perfil" [disabled]="isSelf(u)" [title]="isSelf(u) ? 'Você não pode alterar o próprio perfil' : ''"
+                          (change)="setProfile(u, $any($event.target).value)">
                     <option value="usuario">Usuário</option>
                     <option value="admin">Administrador</option>
                   </select>
                 </td>
-                <td class="px-5 py-3.5 text-center font-semibold text-navy-900">{{ u.viagens }}</td>
+                <td class="px-5 py-3.5 text-center font-semibold text-navy-900">{{ tripCount(u) }}</td>
                 <td class="px-5 py-3.5 text-slate-500">{{ u.criadoEm + 'T12:00:00' | date: 'dd/MM/yyyy' }}</td>
                 <td class="px-5 py-3.5">
-                  <button type="button" role="switch" [attr.aria-checked]="u.ativo" (click)="toggle(u)"
-                          class="inline-flex items-center gap-2 text-sm font-medium" [class]="u.ativo ? 'text-emerald-700' : 'text-slate-500'">
+                  <button type="button" role="switch" [attr.aria-checked]="u.ativo" (click)="toggle(u)" [disabled]="isSelf(u)"
+                          [title]="isSelf(u) ? 'Você não pode desativar a própria conta' : ''"
+                          class="inline-flex items-center gap-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60" [class]="u.ativo ? 'text-emerald-700' : 'text-slate-500'">
                     <span class="relative h-5 w-9 rounded-full transition-colors" [class]="u.ativo ? 'bg-emerald-500' : 'bg-slate-300'">
                       <span class="absolute top-0.5 size-4 rounded-full bg-white shadow transition-all" [class]="u.ativo ? 'left-[18px]' : 'left-0.5'"></span>
                     </span>
@@ -85,30 +96,47 @@ import { StatCard } from '../../shared/components/stat-card';
                   </button>
                 </td>
                 <td class="px-5 py-3.5 text-right">
-                  <button type="button" class="btn btn-ghost !p-2" aria-label="Mais ações"><app-icon name="ellipsis" [size]="16" /></button>
+                  <button type="button" class="btn btn-ghost !p-2 hover:!bg-red-50 hover:!text-red-600" [disabled]="isSelf(u)"
+                          [attr.aria-label]="'Excluir ' + u.nome" [title]="isSelf(u) ? 'Você não pode excluir a própria conta' : 'Excluir usuário'"
+                          (click)="toDelete.set(u)">
+                    <app-icon name="trash" [size]="16" />
+                  </button>
                 </td>
               </tr>
+            } @empty {
+              <tr><td colspan="6" class="px-5 py-10 text-center text-slate-500">Nenhum usuário encontrado para esta busca.</td></tr>
             }
           </tbody>
         </table>
       </div>
-      <p class="border-t border-slate-100 px-5 py-3 text-xs text-slate-500">Mostrando {{ visible().length }} de {{ users().length }} usuários</p>
+      <p class="border-t border-slate-100 px-5 py-3 text-xs text-slate-500">Mostrando {{ visible().length }} de {{ userService.total() }} usuários</p>
     </section>
+
+    <app-confirm-dialog
+      [open]="!!toDelete()"
+      heading="Excluir usuário?"
+      [message]="'A conta de ' + (toDelete()?.nome ?? '') + ' será removida. Esta ação não pode ser desfeita.'"
+      (confirmed)="confirmDelete()"
+      (cancelled)="toDelete.set(null)"
+    />
   `,
 })
 export class Users {
-  protected readonly users = signal<User[]>(USUARIOS.map((u) => ({ ...u })));
-  protected readonly search = signal('');
-  protected readonly profile = signal<'todos' | Perfil>('todos');
+  protected readonly userService = inject(UserService);
+  private readonly auth = inject(AuthService);
+  private readonly trips = inject(TripService);
+  private readonly toast = inject(ToastService);
 
-  protected readonly activeCount = computed(() => this.users().filter((u) => u.ativo).length);
-  protected readonly adminCount = computed(() => this.users().filter((u) => u.perfil === 'admin').length);
-  protected readonly visible = computed(() => {
-    const q = this.search().toLowerCase().trim();
-    return this.users()
-      .filter((u) => this.profile() === 'todos' || u.perfil === this.profile())
-      .filter((u) => !q || `${u.nome} ${u.email}`.toLowerCase().includes(q));
-  });
+  protected readonly search = signal('');
+  protected readonly profile = signal<UserProfileFilter>('todos');
+  /** Usuário aguardando confirmação de exclusão. */
+  protected readonly toDelete = signal<User | null>(null);
+
+  protected readonly visible = computed(() => this.userService.search(this.search(), this.profile()));
+
+  protected readonly tripCount = (u: User) => this.trips.countByUser(u.id);
+  /** O administrador não mexe na própria conta, para não se bloquear sem querer. */
+  protected readonly isSelf = (u: User) => u.id === this.auth.user()?.id;
 
   protected initials(u: User) {
     const parts = u.nome.split(' ');
@@ -121,10 +149,35 @@ export class Users {
   }
 
   protected toggle(user: User) {
-    this.users.update((list) => list.map((u) => (u.id === user.id ? { ...u, ativo: !u.ativo } : u)));
+    this.run(() => {
+      const updated = this.userService.toggleActive(user.id);
+      this.toast.success(`Conta de ${updated.nome} ${updated.ativo ? 'ativada' : 'desativada'}.`);
+    });
   }
 
   protected setProfile(user: User, perfil: Perfil) {
-    this.users.update((list) => list.map((u) => (u.id === user.id ? { ...u, perfil } : u)));
+    this.run(() => {
+      this.userService.setProfile(user.id, perfil);
+      this.toast.success(`${user.nome} agora é ${perfil === 'admin' ? 'administrador' : 'usuário'}.`);
+    });
+  }
+
+  protected confirmDelete() {
+    const user = this.toDelete();
+    if (user) {
+      this.run(() => {
+        this.userService.remove(user.id);
+        this.toast.success(`Conta de ${user.nome} excluída.`);
+      });
+    }
+    this.toDelete.set(null);
+  }
+
+  private run(action: () => void) {
+    try {
+      action();
+    } catch (e) {
+      this.toast.error(e instanceof BusinessError ? e.message : 'Não foi possível concluir a ação.');
+    }
   }
 }
