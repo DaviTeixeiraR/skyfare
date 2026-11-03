@@ -10,6 +10,13 @@ export function toDate(iso: string): Date {
   return new Date(a, m - 1, d);
 }
 
+/** Data local no formato aaaa-mm-dd (toISOString usaria UTC e poderia mudar o dia). */
+export function toIsoDate(date: Date): string {
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${mm}-${dd}`;
+}
+
 export function tripStatus(trip: Trip, hoje = HOJE): TripStatus {
   if (toDate(trip.dataVolta) < hoje) return 'realizada';
   if (toDate(trip.dataIda) <= hoje) return 'em-andamento';
