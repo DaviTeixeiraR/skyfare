@@ -58,13 +58,30 @@ npm start
 
 Depois abra http://localhost:4200.
 
-> **Situação atual (Trabalho 01, protótipo):** as 10 telas já estão prontas em Angular, com dados fictícios (`src/app/core/mock`). A ligação com as APIs, o JSON-Server e os guards de rota fica para a próxima etapa. O guia de estilo está em http://localhost:4200/guia-de-estilo.
+> **Situação atual (Trabalho 02):** as telas têm rotas, menu com `routerLink` e *services* que fazem cadastro, pesquisa, edição e exclusão sobre dados fictícios guardados na memória (`src/app/core/mock`). Ao recarregar a página, os dados voltam ao estado inicial. A ligação com as APIs e o JSON-Server fica para a próxima etapa. O guia de estilo está em http://localhost:4200/guia-de-estilo.
+
+### Login padrão
+
+Use a conta de demonstração (dados fictícios):
+
+| E-mail | Senha | Perfil |
+|---|---|---|
+| skyfareuser@gmail.com | skyfare123 | Administrador |
+
+Essa conta é administradora e abre todas as telas, inclusive Usuários. Para ver a tela de acesso negado, crie uma conta pelo cadastro: ela nasce com o perfil de usuário e não abre `/admin/usuarios`.
+
+### Testes
+
+```bash
+npm test
+```
 
 ## Estrutura
 
 ```
 src/app/
-  core/        modelos, utilitários e dados fictícios
+  core/        modelos, dados fictícios (mock), services (viagens, usuários, login, cidades, câmbio, clima, avisos) e guards
+  app-routing.module.ts / app.routes.ts   rotas da aplicação
   layout/      layout principal (navegação) e de autenticação
   shared/      componentes reutilizáveis (cartões de clima e câmbio, busca, gráficos, ícones)
   features/    telas: auth, home, trips, dashboard, admin, errors, style-guide
