@@ -38,7 +38,7 @@ const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL',
     </div>
 
     <div class="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-      <app-stat-card icon="plane-takeoff" label="Viagens planejadas" [value]="planned.length + ''" hint="Próxima em {{ nextDays }} dias" />
+      <app-stat-card icon="plane-takeoff" label="Viagens planejadas" [value]="planned.length + ''" [hint]="planned.length ? 'Próxima em ' + nextDays + ' dias' : 'Nenhuma viagem futura'" />
       <app-stat-card icon="circle-check" label="Viagens realizadas" [value]="done.length + ''" hint="Em 2026" tone="bg-emerald-50 text-emerald-600" />
       <app-stat-card icon="wallet" label="Orçamento planejado" [value]="plannedBudget" hint="Soma das viagens futuras" tone="bg-sun-50 text-sun-600" />
       <app-stat-card icon="coins" label="Média por viagem" [value]="averageBudget" hint="Considerando todas as viagens" tone="bg-indigo-50 text-indigo-600" />
