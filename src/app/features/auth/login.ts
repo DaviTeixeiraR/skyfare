@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { BusinessError } from '../../core/errors';
+import { AuthService } from '../../core/services/auth.service';
 import { Icon } from '../../shared/components/icon';
 
 @Component({
@@ -12,6 +14,11 @@ import { Icon } from '../../shared/components/icon';
     <p class="mt-2 text-slate-500">Entre para ver e planejar as suas viagens.</p>
 
     <form class="mt-8 space-y-5" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      @if (error()) {
+        <p role="alert" class="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <app-icon name="circle-alert" [size]="18" class="mt-0.5" /> {{ error() }}
+        </p>
+      }
       <div>
         <label class="label" for="email">E-mail</label>
         <div class="relative">
@@ -66,8 +73,13 @@ import { Icon } from '../../shared/components/icon';
   `,
 })
 export class Login {
+  /** Rota que o guard guardou em ?redirectTo= antes de mandar para o login. */
+  readonly redirectTo = input<string>();
+
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
   protected readonly showPassword = signal(false);
+  protected readonly error = signal('');
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     email: ['', [Validators.required, Validators.email]],
@@ -85,7 +97,15 @@ export class Login {
       this.form.markAllAsTouched();
       return;
     }
-    // A autenticação no JSON-Server entra na etapa de desenvolvimento.
-    this.router.navigateByUrl('/viagens');
+    const { email, senha, lembrar } = this.form.getRawValue();
+    try {
+      this.auth.login(email, senha, lembrar);
+    } catch (e) {
+      this.error.set(e instanceof BusinessError ? e.message : 'Não foi possível entrar. Tente de novo.');
+      return;
+    }
+    // Só aceita caminhos internos, para o link do login não levar a outro site.
+    const target = this.redirectTo();
+    this.router.navigateByUrl(target?.startsWith('/') && !target.startsWith('//') ? target : '/viagens');
   }
 }

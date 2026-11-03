@@ -8,6 +8,9 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { BusinessError } from '../../core/errors';
+import { AuthService } from '../../core/services/auth.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Icon } from '../../shared/components/icon';
 
 function passwordsMatch(group: AbstractControl): ValidationErrors | null {
@@ -41,9 +44,11 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
         <div class="relative">
           <app-icon name="mail" [size]="18" class="absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
           <input id="email" type="email" class="input !pl-10" placeholder="voce@email.com" formControlName="email"
-                 [class.input-invalid]="invalid('email')" />
+                 [class.input-invalid]="invalid('email') || emailTaken()" />
         </div>
-        @if (invalid('email')) {
+        @if (emailTaken()) {
+          <p class="field-error"><app-icon name="circle-alert" [size]="14" /> {{ emailTaken() }}</p>
+        } @else if (invalid('email')) {
           <p class="field-error"><app-icon name="circle-alert" [size]="14" /> Informe um e-mail válido.</p>
         }
       </div>
@@ -89,6 +94,9 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
 })
 export class Register {
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
+  private readonly toast = inject(ToastService);
+  protected readonly emailTaken = signal('');
 
   protected readonly form = inject(NonNullableFormBuilder).group(
     {
@@ -130,11 +138,19 @@ export class Register {
 
   protected submit() {
     this.submitted.set(true);
+    this.emailTaken.set('');
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-    // O cadastro no JSON-Server entra na etapa de desenvolvimento.
-    this.router.navigateByUrl('/login');
+    const { nome, email, senha } = this.form.getRawValue();
+    try {
+      this.auth.register({ nome, email, senha });
+    } catch (e) {
+      if (e instanceof BusinessError) this.emailTaken.set(e.message);
+      return;
+    }
+    this.toast.success('Conta criada. Bem-vindo ao Skyfare!');
+    this.router.navigateByUrl('/viagens');
   }
 }

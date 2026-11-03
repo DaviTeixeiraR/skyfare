@@ -1,9 +1,11 @@
 import { Routes } from '@angular/router';
+import { adminGuard, authGuard } from './core/guards/auth.guard';
 import { AuthLayout } from './layout/auth-layout';
 import { MainLayout } from './layout/main-layout';
 
 // Cada tela é carregada sob demanda (lazy loading) com loadComponent.
-// Os guards de autenticação e de perfil entram na etapa de desenvolvimento.
+// Telas públicas: login, cadastro, início, erros e guia de estilo.
+// authGuard: telas de quem entrou. adminGuard: somente administrador.
 export const routes: Routes = [
   {
     path: 'login',
@@ -38,34 +40,41 @@ export const routes: Routes = [
         loadComponent: () => import('./features/home/home').then((m) => m.Home),
       },
       {
-        path: 'viagens',
-        title: 'Minhas viagens | Skyfare',
-        loadComponent: () => import('./features/trips/trip-list').then((m) => m.TripList),
-      },
-      {
-        path: 'viagens/nova',
-        title: 'Nova viagem | Skyfare',
-        loadComponent: () => import('./features/trips/trip-form').then((m) => m.TripForm),
-      },
-      {
-        path: 'viagens/:id/editar',
-        title: 'Editar viagem | Skyfare',
-        loadComponent: () => import('./features/trips/trip-form').then((m) => m.TripForm),
-      },
-      {
-        path: 'viagens/:id',
-        title: 'Detalhe da viagem | Skyfare',
-        loadComponent: () => import('./features/trips/trip-detail').then((m) => m.TripDetail),
-      },
-      {
-        path: 'dashboard',
-        title: 'Dashboard | Skyfare',
-        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
-      },
-      {
-        path: 'admin/usuarios',
-        title: 'Usuários | Skyfare',
-        loadComponent: () => import('./features/admin/users').then((m) => m.Users),
+        path: '',
+        canActivate: [authGuard],
+        children: [
+          {
+            path: 'viagens',
+            title: 'Minhas viagens | Skyfare',
+            loadComponent: () => import('./features/trips/trip-list').then((m) => m.TripList),
+          },
+          {
+            path: 'viagens/nova',
+            title: 'Nova viagem | Skyfare',
+            loadComponent: () => import('./features/trips/trip-form').then((m) => m.TripForm),
+          },
+          {
+            path: 'viagens/:id/editar',
+            title: 'Editar viagem | Skyfare',
+            loadComponent: () => import('./features/trips/trip-form').then((m) => m.TripForm),
+          },
+          {
+            path: 'viagens/:id',
+            title: 'Detalhe da viagem | Skyfare',
+            loadComponent: () => import('./features/trips/trip-detail').then((m) => m.TripDetail),
+          },
+          {
+            path: 'dashboard',
+            title: 'Dashboard | Skyfare',
+            loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+          },
+          {
+            path: 'admin/usuarios',
+            canActivate: [adminGuard],
+            title: 'Usuários | Skyfare',
+            loadComponent: () => import('./features/admin/users').then((m) => m.Users),
+          },
+        ],
       },
       {
         path: 'acesso-negado',
