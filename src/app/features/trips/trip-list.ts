@@ -1,6 +1,7 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { errorMessage } from '../../core/errors';
 import { Trip } from '../../core/models';
@@ -26,7 +27,7 @@ type Filter = 'todas' | TripStatus;
 @Component({
   selector: 'app-trip-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, Flag, Icon, ConfirmDialog, CurrencyPipe, DatePipe],
+  imports: [RouterLink, ReactiveFormsModule, Flag, Icon, ConfirmDialog, CurrencyPipe, DatePipe],
   template: `
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
@@ -36,14 +37,14 @@ type Filter = 'todas' | TripStatus;
       <a routerLink="/viagens/nova" class="btn btn-primary"><app-icon name="plus" [size]="17" /> Nova viagem</a>
     </div>
 
-    <div class="card mt-6 flex flex-wrap items-center gap-3 p-3">
+    <form class="card mt-6 flex flex-wrap items-center gap-3 p-3" [formGroup]="filters">
       <label class="relative min-w-60 flex-1">
         <app-icon name="search" [size]="18" class="absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
         <input class="input !border-transparent !bg-slate-50 !pl-10" placeholder="Buscar por cidade ou país"
-               [(ngModel)]="search" />
+               formControlName="texto" maxlength="60" />
       </label>
       <div class="flex rounded-xl bg-slate-100 p-1" role="tablist" aria-label="Filtrar por situação">
-        @for (f of filters; track f.value) {
+        @for (f of statusOptions; track f.value) {
           <button type="button" role="tab" [attr.aria-selected]="filter() === f.value" (click)="filter.set(f.value)"
                   class="rounded-lg px-3.5 py-1.5 text-sm font-semibold transition-colors"
                   [class]="filter() === f.value ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-navy-900'">
@@ -53,12 +54,12 @@ type Filter = 'todas' | TripStatus;
       </div>
       <label class="flex items-center gap-2 text-sm font-medium text-slate-500">
         <app-icon name="arrow-up-down" [size]="16" />
-        <select class="input !w-auto !py-2" [(ngModel)]="sort">
+        <select class="input !w-auto !py-2" formControlName="ordem">
           <option value="data">Data de ida</option>
           <option value="orcamento">Maior orçamento</option>
         </select>
       </label>
-    </div>
+    </form>
 
     <div class="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
       @for (trip of visible(); track trip.id) {
@@ -156,14 +157,18 @@ export class TripList {
   protected readonly statusLabel = STATUS_LABEL;
   protected readonly statusClass = STATUS_CLASS;
 
-  protected readonly filters: { value: Filter; label: string }[] = [
+  protected readonly statusOptions: { value: Filter; label: string }[] = [
     { value: 'todas', label: 'Todas' },
     { value: 'futura', label: 'Futuras' },
     { value: 'realizada', label: 'Realizadas' },
   ];
-  protected readonly search = signal('');
+  /** Filtros da lista (formulário reativo). */
+  protected readonly filters = inject(NonNullableFormBuilder).group({
+    texto: ['', Validators.maxLength(60)],
+    ordem: ['data' as TripSort],
+  });
+  private readonly filterValue = toSignal(this.filters.valueChanges, { initialValue: this.filters.getRawValue() });
   protected readonly filter = signal<Filter>('todas');
-  protected readonly sort = signal<TripSort>('data');
   /** Viagem aguardando confirmação de exclusão. */
   protected readonly toDelete = signal<Trip | null>(null);
 
@@ -172,9 +177,9 @@ export class TripList {
   protected readonly futureCount = computed(() => this.trips().filter((t) => tripStatus(t) === 'futura').length);
   protected readonly visible = computed(() =>
     this.tripService.search(this.userId(), {
-      texto: this.search(),
+      texto: this.filterValue().texto ?? '',
       status: this.filter(),
-      ordem: this.sort(),
+      ordem: this.filterValue().ordem ?? 'data',
     }),
   );
 

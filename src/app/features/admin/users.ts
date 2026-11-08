@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { errorMessage } from '../../core/errors';
 import { Perfil, User } from '../../core/models';
@@ -16,7 +17,7 @@ import { StatCard } from '../../shared/components/stat-card';
 @Component({
   selector: 'app-users',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, Icon, StatCard, ConfirmDialog, DatePipe],
+  imports: [ReactiveFormsModule, Icon, StatCard, ConfirmDialog, DatePipe],
   template: `
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
@@ -33,21 +34,21 @@ import { StatCard } from '../../shared/components/stat-card';
     </div>
 
     <section class="card mt-5 overflow-hidden">
-      <div class="flex flex-wrap items-center gap-3 border-b border-slate-100 p-4">
+      <form class="flex flex-wrap items-center gap-3 border-b border-slate-100 p-4" [formGroup]="filters">
         <label class="relative min-w-60 flex-1">
           <app-icon name="search" [size]="18" class="absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
           <input class="input !border-transparent !bg-slate-50 !pl-10" placeholder="Buscar por nome ou e-mail"
-                 [(ngModel)]="search" />
+                 formControlName="texto" maxlength="60" />
         </label>
         <label class="flex items-center gap-2 text-sm font-medium text-slate-500">
           <app-icon name="funnel" [size]="16" />
-          <select class="input !w-auto !py-2" [(ngModel)]="profile">
+          <select class="input !w-auto !py-2" formControlName="perfil">
             <option value="todos">Todos os perfis</option>
             <option value="usuario">Usuários</option>
             <option value="admin">Administradores</option>
           </select>
         </label>
-      </div>
+      </form>
 
       <div class="overflow-x-auto">
         <table class="w-full text-left text-sm">
@@ -128,12 +129,16 @@ export class Users {
   private readonly trips = inject(TripService);
   private readonly toast = inject(ToastService);
 
-  protected readonly search = signal('');
-  protected readonly profile = signal<UserProfileFilter>('todos');
+  /** Filtros da tabela (formulário reativo). */
+  protected readonly filters = inject(NonNullableFormBuilder).group({
+    texto: ['', Validators.maxLength(60)],
+    perfil: ['todos' as UserProfileFilter],
+  });
+  private readonly filterValue = toSignal(this.filters.valueChanges, { initialValue: this.filters.getRawValue() });
   /** Usuário aguardando confirmação de exclusão. */
   protected readonly toDelete = signal<User | null>(null);
 
-  protected readonly visible = computed(() => this.userService.search(this.search(), this.profile()));
+  protected readonly visible = computed(() => this.userService.search(this.filterValue().texto ?? '', this.filterValue().perfil ?? 'todos'));
 
   protected readonly tripCount = (u: User) => this.trips.countByUser(u.id);
   /** O administrador não mexe na própria conta, para não se bloquear sem querer. */
