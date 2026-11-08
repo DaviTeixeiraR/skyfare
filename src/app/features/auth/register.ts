@@ -8,7 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { BusinessError } from '../../core/errors';
+import { errorMessage } from '../../core/errors';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Icon } from '../../shared/components/icon';
@@ -27,6 +27,11 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
     <p class="mt-2 text-slate-500">Salve viagens, acompanhe o orçamento e veja relatórios.</p>
 
     <form class="mt-8 space-y-5" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      @if (error()) {
+        <p role="alert" class="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <app-icon name="circle-alert" [size]="18" class="mt-0.5" /> {{ error() }}
+        </p>
+      }
       <div>
         <label class="label" for="nome">Nome completo</label>
         <div class="relative">
@@ -44,11 +49,9 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
         <div class="relative">
           <app-icon name="mail" [size]="18" class="absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
           <input id="email" type="email" class="input !pl-10" placeholder="voce@email.com" formControlName="email"
-                 [class.input-invalid]="invalid('email') || emailTaken()" />
+                 [class.input-invalid]="invalid('email')" />
         </div>
-        @if (emailTaken()) {
-          <p class="field-error"><app-icon name="circle-alert" [size]="14" /> {{ emailTaken() }}</p>
-        } @else if (invalid('email')) {
+        @if (invalid('email')) {
           <p class="field-error"><app-icon name="circle-alert" [size]="14" /> Informe um e-mail válido.</p>
         }
       </div>
@@ -81,7 +84,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
         }
       </div>
 
-      <button type="submit" class="btn btn-primary w-full !py-3">
+      <button type="submit" class="btn btn-primary w-full !py-3" [disabled]="sending()">
         <app-icon name="user-plus" [size]="17" /> Criar conta
       </button>
     </form>
@@ -96,7 +99,8 @@ export class Register {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
-  protected readonly emailTaken = signal('');
+  protected readonly error = signal('');
+  protected readonly sending = signal(false);
 
   protected readonly form = inject(NonNullableFormBuilder).group(
     {
@@ -138,19 +142,22 @@ export class Register {
 
   protected submit() {
     this.submitted.set(true);
-    this.emailTaken.set('');
+    this.error.set('');
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
     const { nome, email, senha } = this.form.getRawValue();
-    try {
-      this.auth.register({ nome, email, senha });
-    } catch (e) {
-      if (e instanceof BusinessError) this.emailTaken.set(e.message);
-      return;
-    }
-    this.toast.success('Conta criada. Bem-vindo ao Skyfare!');
-    this.router.navigateByUrl('/viagens');
+    this.sending.set(true);
+    this.auth.register({ nome, email, senha }).subscribe({
+      next: () => {
+        this.toast.success('Conta criada. Bem-vindo ao Skyfare!');
+        this.router.navigateByUrl('/viagens');
+      },
+      error: (e) => {
+        this.sending.set(false);
+        this.error.set(errorMessage(e, 'Não foi possível criar a conta.'));
+      },
+    });
   }
 }

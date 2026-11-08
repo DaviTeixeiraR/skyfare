@@ -9,7 +9,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { BusinessError } from '../../core/errors';
+import { errorMessage } from '../../core/errors';
 import { City } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
 import { CityService } from '../../core/services/city.service';
@@ -109,7 +109,7 @@ function returnAfterDeparture(group: AbstractControl): ValidationErrors | null {
 
         <div class="flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-6">
           <a routerLink="/viagens" class="btn btn-secondary">Cancelar</a>
-          <button type="submit" class="btn btn-primary"><app-icon name="check" [size]="17" /> {{ editing() ? 'Salvar alterações' : 'Salvar viagem' }}</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()"><app-icon name="check" [size]="17" /> {{ editing() ? 'Salvar alterações' : 'Salvar viagem' }}</button>
         </div>
       </form>
 
@@ -159,6 +159,7 @@ export class TripForm {
   private readonly toast = inject(ToastService);
 
   protected readonly submitted = signal(false);
+  protected readonly saving = signal(false);
   protected readonly city = signal<City | null>(null);
   protected readonly editing = computed(() => !!this.id());
 
@@ -234,18 +235,18 @@ export class TripForm {
     }
     const { dataIda, dataVolta, orcamento, observacoes } = this.form.getRawValue();
     const input = { city, dataIda, dataVolta, orcamentoBRL: Number(orcamento), observacoes };
-    try {
-      if (this.current()) {
-        this.trips.update(this.current()!.id, input);
-        this.toast.success('Viagem atualizada.');
-      } else {
-        this.trips.create(this.auth.user()!.id, input);
-        this.toast.success('Viagem cadastrada.');
-      }
-    } catch (e) {
-      this.toast.error(e instanceof BusinessError ? e.message : 'Não foi possível salvar a viagem.');
-      return;
-    }
-    this.router.navigateByUrl('/viagens');
+    const current = this.current();
+    const request = current ? this.trips.update(current.id, input) : this.trips.create(this.auth.user()!.id, input);
+    this.saving.set(true);
+    request.subscribe({
+      next: () => {
+        this.toast.success(current ? 'Viagem atualizada.' : 'Viagem cadastrada.');
+        this.router.navigateByUrl('/viagens');
+      },
+      error: (e) => {
+        this.saving.set(false);
+        this.toast.error(errorMessage(e, 'Não foi possível salvar a viagem.'));
+      },
+    });
   }
 }

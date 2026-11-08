@@ -1,11 +1,12 @@
+import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { BusinessError } from '../errors';
-import { VIAGENS } from '../mock/mock-data';
+import { map, Observable, tap, throwError } from 'rxjs';
+import { API_URL } from '../api';
+import { BusinessError, friendlyError } from '../errors';
 import { Trip, TripInput } from '../models';
 import { normalizeText } from '../utils/text';
 import { toDate, tripStatus, TripStatus } from '../utils/trip-utils';
 import { CityService } from './city.service';
-import { ExchangeService } from './exchange.service';
 
 export type TripSort = 'data' | 'orcamento';
 
@@ -15,16 +16,27 @@ export interface TripQuery {
   ordem: TripSort;
 }
 
-/** Regras de negócio das viagens: cadastro, consulta, edição e exclusão (lista em memória). */
+const URL = `${API_URL}/trips`;
+
+/** Regras de negócio das viagens: cadastro, consulta, edição e exclusão pela API (coleção trips). */
 @Injectable({ providedIn: 'root' })
 export class TripService {
+  private readonly http = inject(HttpClient);
   private readonly cities = inject(CityService);
-  private readonly exchange = inject(ExchangeService);
 
-  private readonly state = signal<Trip[]>(VIAGENS.map((t) => ({ ...t })));
+  private readonly state = signal<Trip[]>([]);
 
   readonly trips = this.state.asReadonly();
   readonly total = computed(() => this.state().length);
+
+  /** Busca as viagens na API (GET /trips). */
+  load(): Observable<void> {
+    return this.http.get<Trip[]>(URL).pipe(
+      tap((list) => this.state.set(list)),
+      map(() => undefined),
+      friendlyError('Não foi possível carregar as viagens.'),
+    );
+  }
 
   /** Quantidade de viagens de um usuário. */
   countByUser(userId: number): number {
@@ -68,34 +80,41 @@ export class TripService {
     return null;
   }
 
-  create(userId: number, input: TripInput): Trip {
-    this.assertValid(input);
-    const trip: Trip = {
-      id: Math.max(0, ...this.state().map((t) => t.id)) + 1,
-      userId,
-      ...this.fromInput(input),
-    };
-    this.state.update((list) => [...list, trip]);
-    return trip;
-  }
-
-  update(id: number, input: TripInput): Trip {
-    const current = this.getById(id);
-    if (!current) throw new BusinessError('Viagem não encontrada.');
-    this.assertValid(input);
-    const updated: Trip = { ...current, ...this.fromInput(input) };
-    this.state.update((list) => list.map((t) => (t.id === id ? updated : t)));
-    return updated;
-  }
-
-  remove(id: number): void {
-    if (!this.getById(id)) throw new BusinessError('Viagem não encontrada.');
-    this.state.update((list) => list.filter((t) => t.id !== id));
-  }
-
-  private assertValid(input: TripInput) {
+  /** Cadastra a viagem (POST /trips). */
+  create(userId: number, input: TripInput): Observable<Trip> {
     const error = this.validate(input);
-    if (error) throw new BusinessError(error);
+    if (error) return throwError(() => new BusinessError(error));
+    return this.http.post<Trip>(URL, { userId, ...this.fromInput(input) }).pipe(
+      tap((trip) => this.state.update((list) => [...list, trip])),
+      friendlyError('Não foi possível cadastrar a viagem.'),
+    );
+  }
+
+  /** Salva a viagem editada (PUT /trips/:id). */
+  update(id: number, input: TripInput): Observable<Trip> {
+    const current = this.getById(id);
+    if (!current) return throwError(() => new BusinessError('Viagem não encontrada.'));
+    const error = this.validate(input);
+    if (error) return throwError(() => new BusinessError(error));
+    const updated: Trip = { ...current, ...this.fromInput(input) };
+    return this.http.put<Trip>(`${URL}/${id}`, updated).pipe(
+      tap((trip) => this.state.update((list) => list.map((t) => (t.id === id ? trip : t)))),
+      friendlyError('Não foi possível salvar a viagem.'),
+    );
+  }
+
+  /** Exclui a viagem (DELETE /trips/:id). */
+  remove(id: number): Observable<void> {
+    if (!this.getById(id)) return throwError(() => new BusinessError('Viagem não encontrada.'));
+    return this.http.delete<void>(`${URL}/${id}`).pipe(
+      tap(() => this.state.update((list) => list.filter((t) => t.id !== id))),
+      friendlyError('Não foi possível excluir a viagem.'),
+    );
+  }
+
+  /** Tira da lista as viagens de um usuário excluído (a API já apagou essas viagens). */
+  forgetUser(userId: number): void {
+    this.state.update((list) => list.filter((t) => t.userId !== userId));
   }
 
   /** Monta os dados da viagem a partir da cidade escolhida no formulário. */
@@ -108,7 +127,7 @@ export class TripService {
       pais: city.pais,
       codigoPais: city.codigoPais,
       continente: this.cities.continentOf(city.codigoPais),
-      moeda: this.exchange.currencyOf(city.codigoPais) || 'BRL',
+      moeda: this.cities.currencyOf(city.codigoPais) || 'BRL',
       dataIda: input.dataIda,
       dataVolta: input.dataVolta,
       orcamentoBRL: input.orcamentoBRL,

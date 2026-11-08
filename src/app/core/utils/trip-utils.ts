@@ -1,5 +1,7 @@
-import { HOJE } from '../mock/mock-data';
 import { Trip } from '../models';
+
+/** Data de referência do Skyfare: o clima e as cotações do db.json foram coletados nesse dia. */
+export const HOJE = new Date(2026, 9, 18);
 
 export type TripStatus = 'futura' | 'em-andamento' | 'realizada';
 

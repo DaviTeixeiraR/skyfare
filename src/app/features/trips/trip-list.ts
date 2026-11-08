@@ -2,7 +2,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { BusinessError } from '../../core/errors';
+import { errorMessage } from '../../core/errors';
 import { Trip } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
 import { ExchangeService } from '../../core/services/exchange.service';
@@ -198,12 +198,10 @@ export class TripList {
   protected confirmDelete() {
     const trip = this.toDelete();
     if (!trip) return;
-    try {
-      this.tripService.remove(trip.id);
-      this.toast.success(`Viagem para ${trip.cidade} excluída.`);
-    } catch (e) {
-      this.toast.error(e instanceof BusinessError ? e.message : 'Não foi possível excluir a viagem.');
-    }
     this.toDelete.set(null);
+    this.tripService.remove(trip.id).subscribe({
+      next: () => this.toast.success(`Viagem para ${trip.cidade} excluída.`),
+      error: (e) => this.toast.error(errorMessage(e, 'Não foi possível excluir a viagem.')),
+    });
   }
 }

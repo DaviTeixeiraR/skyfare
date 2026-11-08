@@ -7,7 +7,7 @@ export interface User {
   perfil: Perfil;
   ativo: boolean;
   criadoEm: string; // ISO
-  /** Senha em texto puro: existe somente nos dados fictícios, até a etapa do JSON-Server. */
+  /** Senha guardada no db.json do JSON-Server (projeto didático, sem criptografia). */
   senha?: string;
 }
 
@@ -96,4 +96,26 @@ export interface ExchangeRate {
   variacao: number; // variação do dia em %
   atualizadoEm: string;
   historico: number[]; // últimos 30 dias
+}
+
+/** Clima de uma cidade na coleção weather (o id é o id da cidade). */
+export interface CityWeather extends Weather {
+  id: number;
+}
+
+/** País na coleção countries: moeda e continente (id = código ISO alfa-2). */
+export interface Country {
+  id: string;
+  moeda: string;
+  continente: Continente;
+}
+
+/** Item do histórico de buscas (coleção searches). */
+export interface SearchEntry {
+  id: number;
+  cityId: number;
+  cidade: string;
+  pais: string;
+  buscas: number;
+  ultimaEm: string; // ISO
 }

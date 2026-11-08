@@ -1,7 +1,8 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { BusinessError } from '../../core/errors';
+import { Observable } from 'rxjs';
+import { errorMessage } from '../../core/errors';
 import { Perfil, User } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -149,35 +150,31 @@ export class Users {
   }
 
   protected toggle(user: User) {
-    this.run(() => {
-      const updated = this.userService.toggleActive(user.id);
-      this.toast.success(`Conta de ${updated.nome} ${updated.ativo ? 'ativada' : 'desativada'}.`);
-    });
+    this.run(this.userService.toggleActive(user.id), (u) => `Conta de ${u.nome} ${u.ativo ? 'ativada' : 'desativada'}.`);
   }
 
   protected setProfile(user: User, perfil: Perfil) {
-    this.run(() => {
-      this.userService.setProfile(user.id, perfil);
-      this.toast.success(`${user.nome} agora é ${perfil === 'admin' ? 'administrador' : 'usuário'}.`);
-    });
+    this.run(
+      this.userService.setProfile(user.id, perfil),
+      () => `${user.nome} agora é ${perfil === 'admin' ? 'administrador' : 'usuário'}.`,
+    );
   }
 
   protected confirmDelete() {
     const user = this.toDelete();
-    if (user) {
-      this.run(() => {
-        this.userService.remove(user.id);
-        this.toast.success(`Conta de ${user.nome} excluída.`);
-      });
-    }
     this.toDelete.set(null);
+    if (!user) return;
+    this.run(this.userService.remove(user.id), () => {
+      this.trips.forgetUser(user.id);
+      return `Conta de ${user.nome} excluída.`;
+    });
   }
 
-  private run(action: () => void) {
-    try {
-      action();
-    } catch (e) {
-      this.toast.error(e instanceof BusinessError ? e.message : 'Não foi possível concluir a ação.');
-    }
+  /** Envia a requisição e mostra o aviso de sucesso ou de erro. */
+  private run<T>(request: Observable<T>, success: (result: T) => string) {
+    request.subscribe({
+      next: (result) => this.toast.success(success(result)),
+      error: (e) => this.toast.error(errorMessage(e)),
+    });
   }
 }

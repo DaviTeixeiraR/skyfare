@@ -1,16 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
-import {
-  CIDADES_MAIS_PESQUISADAS,
-  CLIMA,
-  CLIMA_PADRAO,
-  COTACOES,
-} from '../../core/mock/mock-data';
 import { Trip } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
+import { ExchangeService } from '../../core/services/exchange.service';
+import { SearchService } from '../../core/services/search.service';
 import { TripService } from '../../core/services/trip.service';
 import { UserService } from '../../core/services/user.service';
+import { WeatherService } from '../../core/services/weather.service';
 import { daysUntil, toDate, tripStatus } from '../../core/utils/trip-utils';
 import { weatherInfo } from '../../core/utils/weather-codes';
 import { ChartView } from '../../shared/components/chart';
@@ -140,6 +137,8 @@ export class Dashboard {
   private readonly auth = inject(AuthService);
   private readonly tripService = inject(TripService);
   private readonly userService = inject(UserService);
+  private readonly weatherService = inject(WeatherService);
+  private readonly exchange = inject(ExchangeService);
 
   /** Viagens do usuário logado (a tela é recriada a cada visita, então já vem atualizada). */
   private readonly trips = this.tripService.listByUser(this.auth.user()?.id ?? 0);
@@ -148,7 +147,7 @@ export class Dashboard {
   protected readonly users = this.userService.users();
   protected readonly activeUsers = this.userService.activeCount();
   protected readonly totalTrips = this.tripService.total();
-  protected readonly topCities = CIDADES_MAIS_PESQUISADAS;
+  protected readonly topCities = inject(SearchService).top();
 
   protected readonly planned = this.trips.filter((t) => tripStatus(t) === 'futura').sort(
     (a, b) => toDate(a.dataIda).getTime() - toDate(b.dataIda).getTime(),
@@ -161,8 +160,8 @@ export class Dashboard {
   );
 
   protected countdown = (t: Trip) => daysUntil(t.dataIda);
-  protected weatherIcon = (t: Trip) => weatherInfo((CLIMA[t.cityId] ?? CLIMA_PADRAO).atual.codigo).icone;
-  protected temperature = (t: Trip) => (CLIMA[t.cityId] ?? CLIMA_PADRAO).atual.temperatura;
+  protected weatherIcon = (t: Trip) => weatherInfo(this.weatherService.getByCity(t.cityId).atual.codigo).icone;
+  protected temperature = (t: Trip) => this.weatherService.getByCity(t.cityId).atual.temperatura;
 
   protected readonly monthsChart: ChartConfiguration = (() => {
     const labels: string[] = [];
@@ -223,13 +222,13 @@ export class Dashboard {
 
   protected readonly currencyChart: ChartConfiguration = (() => {
     const palette = ['#3381fc', '#f59e0b', '#14b8a6', '#0b1b3f'];
-    const codes = [...new Set(this.planned.map((t) => t.moeda))].filter((c) => COTACOES[c]);
+    const codes = [...new Set(this.planned.map((t) => t.moeda))].filter((c) => this.exchange.getRate(c));
     return {
       type: 'line',
       data: {
         labels: Array.from({ length: 30 }, (_, i) => (i === 29 ? 'Hoje' : `-${29 - i}d`)),
         datasets: codes.map((code, i) => {
-          const h = COTACOES[code].historico;
+          const h = this.exchange.getRate(code)!.historico;
           return {
             label: code,
             data: h.map((v) => +(((v - h[0]) / h[0]) * 100).toFixed(2)),

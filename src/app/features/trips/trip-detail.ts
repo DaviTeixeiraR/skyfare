@@ -2,7 +2,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
-import { BusinessError } from '../../core/errors';
+import { errorMessage } from '../../core/errors';
 import { AuthService } from '../../core/services/auth.service';
 import { ExchangeService } from '../../core/services/exchange.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -167,14 +167,16 @@ export class TripDetail {
   protected readonly countdown = computed(() => daysUntil(this.trip()!.dataIda));
 
   protected remove(id: number, cidade: string) {
-    try {
-      this.trips.remove(id);
-      this.toast.success(`Viagem para ${cidade} excluída.`);
-      this.router.navigate(['/viagens']);
-    } catch (e) {
-      this.confirming.set(false);
-      this.toast.error(e instanceof BusinessError ? e.message : 'Não foi possível excluir a viagem.');
-    }
+    this.trips.remove(id).subscribe({
+      next: () => {
+        this.toast.success(`Viagem para ${cidade} excluída.`);
+        this.router.navigate(['/viagens']);
+      },
+      error: (e) => {
+        this.confirming.set(false);
+        this.toast.error(errorMessage(e, 'Não foi possível excluir a viagem.'));
+      },
+    });
   }
 
   protected readonly chart = computed<ChartConfiguration>(() => {
