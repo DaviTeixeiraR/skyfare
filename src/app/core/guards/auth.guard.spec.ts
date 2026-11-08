@@ -1,7 +1,9 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, provideRouter, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
-import { SENHA_DEMO } from '../mock/mock-data';
 import { AuthService } from '../services/auth.service';
+import { UserService } from '../services/user.service';
+import { flushList, login, setupHttp, USERS } from '../testing';
 import { adminGuard, authGuard } from './auth.guard';
 
 function run(guard: typeof authGuard, url: string) {
@@ -13,11 +15,14 @@ function run(guard: typeof authGuard, url: string) {
 describe('guards de rota', () => {
   let auth: AuthService;
   let router: Router;
+  let http: HttpTestingController;
 
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    http = setupHttp([provideRouter([])]);
+    TestBed.inject(UserService).load().subscribe();
+    flushList(http, 'users', USERS);
     auth = TestBed.inject(AuthService);
     router = TestBed.inject(Router);
   });
@@ -28,19 +33,19 @@ describe('guards de rota', () => {
   });
 
   it('authGuard libera usuário logado', () => {
-    auth.login('ana.souza@email.com', SENHA_DEMO);
+    login(auth, http, 'ana.souza@email.com');
     expect(run(authGuard, '/viagens')).toBe(true);
   });
 
   it('adminGuard leva usuário comum para acesso negado', () => {
-    auth.login('ana.souza@email.com', SENHA_DEMO);
+    login(auth, http, 'ana.souza@email.com');
     const result = run(adminGuard, '/admin/usuarios') as UrlTree;
     expect(router.serializeUrl(result)).toBe('/acesso-negado');
   });
 
   it('adminGuard libera administrador e manda visitante para o login', () => {
     expect(router.serializeUrl(run(adminGuard, '/admin/usuarios') as UrlTree)).toContain('/login');
-    auth.login('skyfareuser@gmail.com', SENHA_DEMO);
+    login(auth, http, 'skyfareuser@gmail.com');
     expect(run(adminGuard, '/admin/usuarios')).toBe(true);
   });
 });
