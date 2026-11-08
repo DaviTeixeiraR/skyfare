@@ -9,7 +9,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { BusinessError } from '../../core/errors';
+import { errorMessage } from '../../core/errors';
 import { City } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
 import { CityService } from '../../core/services/city.service';
@@ -104,12 +104,17 @@ function returnAfterDeparture(group: AbstractControl): ValidationErrors | null {
         <div>
           <label class="label" for="observacoes">Observações <span class="font-normal text-slate-400">(opcional)</span></label>
           <textarea id="observacoes" rows="4" class="input resize-none" placeholder="Passeios, reservas, lembretes..."
-                    formControlName="observacoes"></textarea>
+                    formControlName="observacoes" [class.input-invalid]="form.controls.observacoes.invalid"></textarea>
+          @if (form.controls.observacoes.hasError('maxlength')) {
+            <p class="field-error"><app-icon name="circle-alert" [size]="14" /> Use no máximo 300 caracteres.</p>
+          } @else {
+            <p class="mt-1.5 text-right text-xs text-slate-400">{{ value().observacoes?.length ?? 0 }}/300</p>
+          }
         </div>
 
         <div class="flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-6">
           <a routerLink="/viagens" class="btn btn-secondary">Cancelar</a>
-          <button type="submit" class="btn btn-primary"><app-icon name="check" [size]="17" /> {{ editing() ? 'Salvar alterações' : 'Salvar viagem' }}</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()"><app-icon name="check" [size]="17" /> {{ editing() ? 'Salvar alterações' : 'Salvar viagem' }}</button>
         </div>
       </form>
 
@@ -159,6 +164,7 @@ export class TripForm {
   private readonly toast = inject(ToastService);
 
   protected readonly submitted = signal(false);
+  protected readonly saving = signal(false);
   protected readonly city = signal<City | null>(null);
   protected readonly editing = computed(() => !!this.id());
 
@@ -173,12 +179,12 @@ export class TripForm {
       dataIda: ['', Validators.required],
       dataVolta: ['', Validators.required],
       orcamento: [0, [Validators.required, Validators.min(1)]],
-      observacoes: [''],
+      observacoes: ['', Validators.maxLength(300)],
     },
     { validators: returnAfterDeparture },
   );
 
-  private readonly value = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
+  protected readonly value = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
 
   protected readonly currency = computed(() => this.exchange.currencyOf(this.city()?.codigoPais ?? ''));
   protected readonly rate = computed(() => this.exchange.getRate(this.currency()));
@@ -234,18 +240,18 @@ export class TripForm {
     }
     const { dataIda, dataVolta, orcamento, observacoes } = this.form.getRawValue();
     const input = { city, dataIda, dataVolta, orcamentoBRL: Number(orcamento), observacoes };
-    try {
-      if (this.current()) {
-        this.trips.update(this.current()!.id, input);
-        this.toast.success('Viagem atualizada.');
-      } else {
-        this.trips.create(this.auth.user()!.id, input);
-        this.toast.success('Viagem cadastrada.');
-      }
-    } catch (e) {
-      this.toast.error(e instanceof BusinessError ? e.message : 'Não foi possível salvar a viagem.');
-      return;
-    }
-    this.router.navigateByUrl('/viagens');
+    const current = this.current();
+    const request = current ? this.trips.update(current.id, input) : this.trips.create(this.auth.user()!.id, input);
+    this.saving.set(true);
+    request.subscribe({
+      next: () => {
+        this.toast.success(current ? 'Viagem atualizada.' : 'Viagem cadastrada.');
+        this.router.navigateByUrl('/viagens');
+      },
+      error: (e) => {
+        this.saving.set(false);
+        this.toast.error(errorMessage(e, 'Não foi possível salvar a viagem.'));
+      },
+    });
   }
 }

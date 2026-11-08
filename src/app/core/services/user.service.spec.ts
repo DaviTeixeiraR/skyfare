@@ -1,50 +1,77 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { API_URL } from '../api';
 import { BusinessError } from '../errors';
+import { flushList, setupHttp, USERS } from '../testing';
 import { UserService } from './user.service';
 
 describe('UserService', () => {
   let service: UserService;
+  let http: HttpTestingController;
 
   beforeEach(() => {
+    http = setupHttp();
     service = TestBed.inject(UserService);
+    service.load().subscribe();
+    flushList(http, 'users', USERS);
   });
 
-  it('carrega os usuários fictícios e calcula os indicadores', () => {
-    expect(service.total()).toBe(8);
-    expect(service.activeCount()).toBe(7);
-    expect(service.adminCount()).toBe(2);
+  afterEach(() => http.verify());
+
+  it('carrega os usuários da API e calcula os indicadores', () => {
+    expect(service.total()).toBe(3);
+    expect(service.activeCount()).toBe(2);
+    expect(service.adminCount()).toBe(1);
   });
 
-  it('cadastra usuário com perfil padrão e id seguinte', () => {
-    const user = service.create({ nome: 'Maria Souza', email: 'maria@email.com', senha: 'senha1234' });
-    expect(user).toMatchObject({ id: 9, perfil: 'usuario', ativo: true });
-    expect(service.total()).toBe(9);
+  it('cadastra usuário com POST depois de conferir o e-mail', () => {
+    let nome = '';
+    service.create({ nome: 'Maria Souza', email: 'Maria@Email.com', senha: 'senha1234' }).subscribe((u) => (nome = u.nome));
+
+    const check = http.expectOne((r) => r.url === `${API_URL}/users` && r.params.get('email') === 'maria@email.com');
+    check.flush([]);
+    const post = http.expectOne({ method: 'POST', url: `${API_URL}/users` });
+    expect(post.request.body).toMatchObject({ email: 'maria@email.com', perfil: 'usuario', ativo: true });
+    post.flush({ ...post.request.body, id: 9 });
+
+    expect(nome).toBe('Maria Souza');
+    expect(service.total()).toBe(4);
   });
 
-  it('não permite e-mail repetido (sem diferenciar caixa) nem dados inválidos', () => {
-    expect(() => service.create({ nome: 'Outro', email: 'SKYFAREUSER@gmail.com', senha: 'senha1234' })).toThrow(
-      'Já existe uma conta',
-    );
-    expect(() => service.create({ nome: 'Al', email: 'al@email.com', senha: 'senha1234' })).toThrow(BusinessError);
-    expect(() => service.create({ nome: 'Alan', email: 'alan@email.com', senha: '123' })).toThrow('8 caracteres');
+  it('não envia o cadastro com e-mail repetido nem com dados inválidos', () => {
+    let erro = '';
+    service.create({ nome: 'Outro', email: 'skyfareuser@gmail.com', senha: 'senha1234' }).subscribe({ error: (e) => (erro = e.message) });
+    http.expectOne((r) => r.params.get('email') === 'skyfareuser@gmail.com').flush([USERS[0]]);
+    expect(erro).toContain('Já existe uma conta');
+
+    service.create({ nome: 'Al', email: 'al@email.com', senha: 'senha1234' }).subscribe({ error: (e) => expect(e).toBeInstanceOf(BusinessError) });
+    service.create({ nome: 'Alan', email: 'alan@email.com', senha: '123' }).subscribe({ error: (e) => expect(e.message).toContain('8 caracteres') });
+    // Nenhuma requisição foi feita para os dados inválidos (verificado no afterEach).
   });
 
   it('pesquisa por nome ou e-mail e filtra por perfil', () => {
-    expect(service.search('camila').map((u) => u.id)).toEqual([4]);
-    expect(service.search('EMAIL.COM', 'admin').map((u) => u.id)).toEqual([4]);
-    expect(service.search('', 'admin')).toHaveLength(2);
+    expect(service.search('ana').map((u) => u.id)).toEqual([2]);
+    expect(service.search('', 'admin').map((u) => u.id)).toEqual([1]);
   });
 
-  it('altera perfil e ativa ou desativa a conta', () => {
-    expect(service.setProfile(2, 'admin').perfil).toBe('admin');
-    expect(service.toggleActive(2).ativo).toBe(false);
-    expect(service.toggleActive(2).ativo).toBe(true);
-    expect(() => service.toggleActive(99)).toThrow('não encontrado');
+  it('altera perfil e situação com PATCH', () => {
+    service.toggleActive(2).subscribe();
+    const req = http.expectOne({ method: 'PATCH', url: `${API_URL}/users/2` });
+    expect(req.request.body).toEqual({ ativo: false });
+    req.flush({ ...USERS[1], ativo: false });
+    expect(service.getById(2)?.ativo).toBe(false);
   });
 
-  it('exclui usuário', () => {
-    service.remove(5);
+  it('exclui usuário com DELETE', () => {
+    service.remove(5).subscribe();
+    http.expectOne({ method: 'DELETE', url: `${API_URL}/users/5` }).flush({});
     expect(service.getById(5)).toBeUndefined();
-    expect(() => service.remove(5)).toThrow(BusinessError);
+  });
+
+  it('transforma falha de conexão em mensagem amigável', () => {
+    let erro = '';
+    service.remove(2).subscribe({ error: (e) => (erro = e.message) });
+    http.expectOne(`${API_URL}/users/2`).error(new ProgressEvent('error'), { status: 0 });
+    expect(erro).toContain('JSON-Server');
   });
 });

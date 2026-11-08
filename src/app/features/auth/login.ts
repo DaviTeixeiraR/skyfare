@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { BusinessError } from '../../core/errors';
+import { errorMessage } from '../../core/errors';
 import { AuthService } from '../../core/services/auth.service';
 import { Icon } from '../../shared/components/icon';
 
@@ -55,7 +55,7 @@ import { Icon } from '../../shared/components/icon';
         Manter conectado
       </label>
 
-      <button type="submit" class="btn btn-primary w-full !py-3">Entrar</button>
+      <button type="submit" class="btn btn-primary w-full !py-3" [disabled]="sending()">{{ sending() ? 'Entrando...' : 'Entrar' }}</button>
     </form>
 
     <div class="my-8 flex items-center gap-3 text-xs font-medium text-slate-400">
@@ -80,6 +80,7 @@ export class Login {
   private readonly auth = inject(AuthService);
   protected readonly showPassword = signal(false);
   protected readonly error = signal('');
+  protected readonly sending = signal(false);
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     email: ['', [Validators.required, Validators.email]],
@@ -98,14 +99,18 @@ export class Login {
       return;
     }
     const { email, senha, lembrar } = this.form.getRawValue();
-    try {
-      this.auth.login(email, senha, lembrar);
-    } catch (e) {
-      this.error.set(e instanceof BusinessError ? e.message : 'Não foi possível entrar. Tente de novo.');
-      return;
-    }
-    // Só aceita caminhos internos, para o link do login não levar a outro site.
-    const target = this.redirectTo();
-    this.router.navigateByUrl(target?.startsWith('/') && !target.startsWith('//') ? target : '/viagens');
+    this.error.set('');
+    this.sending.set(true);
+    this.auth.login(email, senha, lembrar).subscribe({
+      next: () => {
+        // Só aceita caminhos internos, para o link do login não levar a outro site.
+        const target = this.redirectTo();
+        this.router.navigateByUrl(target?.startsWith('/') && !target.startsWith('//') ? target : '/viagens');
+      },
+      error: (e) => {
+        this.sending.set(false);
+        this.error.set(errorMessage(e, 'Não foi possível entrar. Tente de novo.'));
+      },
+    });
   }
 }

@@ -1,11 +1,12 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { map, Observable, tap } from 'rxjs';
 import { BusinessError } from '../errors';
 import { NewUser, User } from '../models';
 import { UserService } from './user.service';
 
 const SESSION_KEY = 'skyfare.sessao';
 
-/** Sessão do usuário: login, cadastro de conta e logout (simulados, sem API). */
+/** Sessão do usuário: login e cadastro de conta consultam a API pelo UserService. */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly users = inject(UserService);
@@ -23,21 +24,30 @@ export class AuthService {
   readonly isLoggedIn = computed(() => this.user() !== null);
   readonly isAdmin = computed(() => this.user()?.perfil === 'admin');
 
-  login(email: string, senha: string, lembrar = true): User {
-    const user = this.users.findByEmail(email);
-    if (!user || user.senha !== senha) throw new BusinessError('E-mail ou senha incorretos.');
-    if (!user.ativo) throw new BusinessError('Esta conta está desativada. Fale com um administrador.');
-    this.userId.set(user.id);
-    this.saveSession(user.id, lembrar);
-    return user;
+  /** Procura o e-mail na API (GET /users?email=) e confere a senha. */
+  login(email: string, senha: string, lembrar = true): Observable<User> {
+    return this.users.fetchByEmail(email).pipe(
+      map((user) => {
+        if (!user || user.senha !== senha) throw new BusinessError('E-mail ou senha incorretos.');
+        if (!user.ativo) throw new BusinessError('Esta conta está desativada. Fale com um administrador.');
+        return user;
+      }),
+      tap((user) => {
+        this.users.upsert(user);
+        this.userId.set(user.id);
+        this.saveSession(user.id, lembrar);
+      }),
+    );
   }
 
-  /** Cria a conta (perfil usuário) e já entra com ela. */
-  register(data: Omit<NewUser, 'perfil'>): User {
-    const user = this.users.create({ ...data, perfil: 'usuario' });
-    this.userId.set(user.id);
-    this.saveSession(user.id, true);
-    return user;
+  /** Cria a conta (perfil usuário) pela API e já entra com ela. */
+  register(data: Omit<NewUser, 'perfil'>): Observable<User> {
+    return this.users.create({ ...data, perfil: 'usuario' }).pipe(
+      tap((user) => {
+        this.userId.set(user.id);
+        this.saveSession(user.id, true);
+      }),
+    );
   }
 
   logout(): void {
