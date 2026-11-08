@@ -104,7 +104,12 @@ function returnAfterDeparture(group: AbstractControl): ValidationErrors | null {
         <div>
           <label class="label" for="observacoes">Observações <span class="font-normal text-slate-400">(opcional)</span></label>
           <textarea id="observacoes" rows="4" class="input resize-none" placeholder="Passeios, reservas, lembretes..."
-                    formControlName="observacoes"></textarea>
+                    formControlName="observacoes" [class.input-invalid]="form.controls.observacoes.invalid"></textarea>
+          @if (form.controls.observacoes.hasError('maxlength')) {
+            <p class="field-error"><app-icon name="circle-alert" [size]="14" /> Use no máximo 300 caracteres.</p>
+          } @else {
+            <p class="mt-1.5 text-right text-xs text-slate-400">{{ value().observacoes?.length ?? 0 }}/300</p>
+          }
         </div>
 
         <div class="flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-6">
@@ -174,12 +179,12 @@ export class TripForm {
       dataIda: ['', Validators.required],
       dataVolta: ['', Validators.required],
       orcamento: [0, [Validators.required, Validators.min(1)]],
-      observacoes: [''],
+      observacoes: ['', Validators.maxLength(300)],
     },
     { validators: returnAfterDeparture },
   );
 
-  private readonly value = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
+  protected readonly value = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
 
   protected readonly currency = computed(() => this.exchange.currencyOf(this.city()?.codigoPais ?? ''));
   protected readonly rate = computed(() => this.exchange.getRate(this.currency()));
