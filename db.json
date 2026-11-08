@@ -1,0 +1,1184 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "nome": "Davi Teixeira",
+      "email": "skyfareuser@gmail.com",
+      "perfil": "admin",
+      "ativo": true,
+      "criadoEm": "2026-10-18",
+      "senha": "skyfare123"
+    },
+    {
+      "id": 2,
+      "nome": "Ana Carolina Souza",
+      "email": "ana.souza@email.com",
+      "perfil": "usuario",
+      "ativo": true,
+      "criadoEm": "2026-08-02",
+      "senha": "skyfare123"
+    },
+    {
+      "id": 3,
+      "nome": "Bruno Lima",
+      "email": "bruno.lima@email.com",
+      "perfil": "usuario",
+      "ativo": true,
+      "criadoEm": "2026-08-15",
+      "senha": "skyfare123"
+    },
+    {
+      "id": 4,
+      "nome": "Camila Rocha",
+      "email": "camila.rocha@email.com",
+      "perfil": "admin",
+      "ativo": true,
+      "criadoEm": "2026-08-20",
+      "senha": "skyfare123"
+    },
+    {
+      "id": 5,
+      "nome": "Diego Martins",
+      "email": "diego.m@email.com",
+      "perfil": "usuario",
+      "ativo": false,
+      "criadoEm": "2026-09-01",
+      "senha": "skyfare123"
+    },
+    {
+      "id": 6,
+      "nome": "Fernanda Alves",
+      "email": "fe.alves@email.com",
+      "perfil": "usuario",
+      "ativo": true,
+      "criadoEm": "2026-09-11",
+      "senha": "skyfare123"
+    },
+    {
+      "id": 7,
+      "nome": "Gabriel Nunes",
+      "email": "gabriel.nunes@email.com",
+      "perfil": "usuario",
+      "ativo": true,
+      "criadoEm": "2026-09-29",
+      "senha": "skyfare123"
+    },
+    {
+      "id": 8,
+      "nome": "Helena Castro",
+      "email": "helena.castro@email.com",
+      "perfil": "usuario",
+      "ativo": true,
+      "criadoEm": "2026-10-07",
+      "senha": "skyfare123"
+    }
+  ],
+  "trips": [
+    {
+      "id": 1,
+      "userId": 1,
+      "cityId": 2650225,
+      "cidade": "Edimburgo",
+      "estado": "Escócia",
+      "pais": "Reino Unido",
+      "codigoPais": "GB",
+      "continente": "Europa",
+      "moeda": "GBP",
+      "dataIda": "2026-12-12",
+      "dataVolta": "2026-12-20",
+      "orcamentoBRL": 15000,
+      "observacoes": "Mercado de Natal, Castelo de Edimburgo e passeio pelas Highlands."
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "cityId": 2267057,
+      "cidade": "Lisboa",
+      "estado": "Lisboa",
+      "pais": "Portugal",
+      "codigoPais": "PT",
+      "continente": "Europa",
+      "moeda": "EUR",
+      "dataIda": "2027-02-05",
+      "dataVolta": "2027-02-15",
+      "orcamentoBRL": 12000,
+      "observacoes": "Bate-volta para Sintra e Cascais."
+    },
+    {
+      "id": 3,
+      "userId": 1,
+      "cityId": 3435910,
+      "cidade": "Buenos Aires",
+      "estado": "Buenos Aires",
+      "pais": "Argentina",
+      "codigoPais": "AR",
+      "continente": "América do Sul",
+      "moeda": "ARS",
+      "dataIda": "2027-03-20",
+      "dataVolta": "2027-03-25",
+      "orcamentoBRL": 6500,
+      "observacoes": "Show de tango e visita a La Boca."
+    },
+    {
+      "id": 4,
+      "userId": 1,
+      "cityId": 1850147,
+      "cidade": "Tóquio",
+      "estado": "Tóquio",
+      "pais": "Japão",
+      "codigoPais": "JP",
+      "continente": "Ásia",
+      "moeda": "JPY",
+      "dataIda": "2027-07-10",
+      "dataVolta": "2027-07-24",
+      "orcamentoBRL": 28000,
+      "observacoes": "Comprar o JR Pass antes da viagem."
+    },
+    {
+      "id": 5,
+      "userId": 1,
+      "cityId": 3871336,
+      "cidade": "Santiago",
+      "estado": "Região Metropolitana",
+      "pais": "Chile",
+      "codigoPais": "CL",
+      "continente": "América do Sul",
+      "moeda": "CLP",
+      "dataIda": "2026-09-02",
+      "dataVolta": "2026-09-08",
+      "orcamentoBRL": 5800,
+      "observacoes": "Valle Nevado e vinícolas."
+    },
+    {
+      "id": 6,
+      "userId": 1,
+      "cityId": 3462315,
+      "cidade": "Gramado",
+      "estado": "Rio Grande do Sul",
+      "pais": "Brasil",
+      "codigoPais": "BR",
+      "continente": "América do Sul",
+      "moeda": "BRL",
+      "dataIda": "2026-06-15",
+      "dataVolta": "2026-06-19",
+      "orcamentoBRL": 3200,
+      "observacoes": "Festival de inverno."
+    },
+    {
+      "id": 7,
+      "userId": 2,
+      "cityId": 3169070,
+      "cidade": "Roma",
+      "estado": "Lácio",
+      "pais": "Itália",
+      "codigoPais": "IT",
+      "continente": "Europa",
+      "moeda": "EUR",
+      "dataIda": "2026-11-20",
+      "dataVolta": "2026-11-27",
+      "orcamentoBRL": 8200,
+      "observacoes": "Coliseu, Vaticano e jantar em Trastevere."
+    },
+    {
+      "id": 8,
+      "userId": 2,
+      "cityId": 5128581,
+      "cidade": "Nova York",
+      "estado": "Nova York",
+      "pais": "Estados Unidos",
+      "codigoPais": "US",
+      "continente": "América do Norte",
+      "moeda": "USD",
+      "dataIda": "2027-01-10",
+      "dataVolta": "2027-01-20",
+      "orcamentoBRL": 14000,
+      "observacoes": "Musical na Broadway e patinação no Central Park."
+    },
+    {
+      "id": 9,
+      "userId": 3,
+      "cityId": 2643743,
+      "cidade": "Londres",
+      "estado": "Inglaterra",
+      "pais": "Reino Unido",
+      "codigoPais": "GB",
+      "continente": "Europa",
+      "moeda": "GBP",
+      "dataIda": "2026-08-05",
+      "dataVolta": "2026-08-12",
+      "orcamentoBRL": 11000,
+      "observacoes": "Museus gratuitos e passeio no Tâmisa."
+    },
+    {
+      "id": 10,
+      "userId": 4,
+      "cityId": 3117735,
+      "cidade": "Madri",
+      "estado": "Comunidade de Madri",
+      "pais": "Espanha",
+      "codigoPais": "ES",
+      "continente": "Europa",
+      "moeda": "EUR",
+      "dataIda": "2026-12-26",
+      "dataVolta": "2027-01-03",
+      "orcamentoBRL": 9800,
+      "observacoes": "Virada do ano na Puerta del Sol."
+    },
+    {
+      "id": 11,
+      "userId": 4,
+      "cityId": 2147714,
+      "cidade": "Sydney",
+      "estado": "Nova Gales do Sul",
+      "pais": "Austrália",
+      "codigoPais": "AU",
+      "continente": "Oceania",
+      "moeda": "AUD",
+      "dataIda": "2027-04-02",
+      "dataVolta": "2027-04-16",
+      "orcamentoBRL": 26000,
+      "observacoes": "Ópera de Sydney e Bondi Beach."
+    },
+    {
+      "id": 12,
+      "userId": 6,
+      "cityId": 2988507,
+      "cidade": "Paris",
+      "estado": "Île-de-France",
+      "pais": "França",
+      "codigoPais": "FR",
+      "continente": "Europa",
+      "moeda": "EUR",
+      "dataIda": "2026-09-12",
+      "dataVolta": "2026-09-19",
+      "orcamentoBRL": 10500,
+      "observacoes": "Torre Eiffel e Louvre."
+    },
+    {
+      "id": 13,
+      "userId": 7,
+      "cityId": 3451190,
+      "cidade": "Rio de Janeiro",
+      "estado": "Rio de Janeiro",
+      "pais": "Brasil",
+      "codigoPais": "BR",
+      "continente": "América do Sul",
+      "moeda": "BRL",
+      "dataIda": "2026-11-05",
+      "dataVolta": "2026-11-09",
+      "orcamentoBRL": 3500,
+      "observacoes": "Cristo Redentor e Pão de Açúcar."
+    },
+    {
+      "id": 14,
+      "userId": 8,
+      "cityId": 2950159,
+      "cidade": "Berlim",
+      "estado": "Berlim",
+      "pais": "Alemanha",
+      "codigoPais": "DE",
+      "continente": "Europa",
+      "moeda": "EUR",
+      "dataIda": "2027-02-18",
+      "dataVolta": "2027-02-25",
+      "orcamentoBRL": 9100,
+      "observacoes": "Muro de Berlim e Ilha dos Museus."
+    }
+  ],
+  "cities": [
+    {
+      "id": 2650225,
+      "nome": "Edimburgo",
+      "estado": "Escócia",
+      "pais": "Reino Unido",
+      "codigoPais": "GB",
+      "latitude": 55.95,
+      "longitude": -3.19
+    },
+    {
+      "id": 4688275,
+      "nome": "Edinburg",
+      "estado": "Texas",
+      "pais": "Estados Unidos",
+      "codigoPais": "US",
+      "latitude": 26.3,
+      "longitude": -98.16
+    },
+    {
+      "id": 4257494,
+      "nome": "Edinburgh",
+      "estado": "Indiana",
+      "pais": "Estados Unidos",
+      "codigoPais": "US",
+      "latitude": 39.35,
+      "longitude": -85.97
+    },
+    {
+      "id": 2267057,
+      "nome": "Lisboa",
+      "estado": "Lisboa",
+      "pais": "Portugal",
+      "codigoPais": "PT",
+      "latitude": 38.72,
+      "longitude": -9.14
+    },
+    {
+      "id": 1850147,
+      "nome": "Tóquio",
+      "estado": "Tóquio",
+      "pais": "Japão",
+      "codigoPais": "JP",
+      "latitude": 35.69,
+      "longitude": 139.69
+    },
+    {
+      "id": 3435910,
+      "nome": "Buenos Aires",
+      "estado": "Buenos Aires",
+      "pais": "Argentina",
+      "codigoPais": "AR",
+      "latitude": -34.61,
+      "longitude": -58.38
+    },
+    {
+      "id": 3871336,
+      "nome": "Santiago",
+      "estado": "Região Metropolitana",
+      "pais": "Chile",
+      "codigoPais": "CL",
+      "latitude": -33.46,
+      "longitude": -70.65
+    },
+    {
+      "id": 3109642,
+      "nome": "Santiago de Compostela",
+      "estado": "Galiza",
+      "pais": "Espanha",
+      "codigoPais": "ES",
+      "latitude": 42.88,
+      "longitude": -8.54
+    },
+    {
+      "id": 2988507,
+      "nome": "Paris",
+      "estado": "Île-de-France",
+      "pais": "França",
+      "codigoPais": "FR",
+      "latitude": 48.85,
+      "longitude": 2.35
+    },
+    {
+      "id": 4717560,
+      "nome": "Paris",
+      "estado": "Texas",
+      "pais": "Estados Unidos",
+      "codigoPais": "US",
+      "latitude": 33.66,
+      "longitude": -95.56
+    },
+    {
+      "id": 3462315,
+      "nome": "Gramado",
+      "estado": "Rio Grande do Sul",
+      "pais": "Brasil",
+      "codigoPais": "BR",
+      "latitude": -29.38,
+      "longitude": -50.87
+    },
+    {
+      "id": 5128581,
+      "nome": "Nova York",
+      "estado": "Nova York",
+      "pais": "Estados Unidos",
+      "codigoPais": "US",
+      "latitude": 40.71,
+      "longitude": -74.01
+    },
+    {
+      "id": 2643743,
+      "nome": "Londres",
+      "estado": "Inglaterra",
+      "pais": "Reino Unido",
+      "codigoPais": "GB",
+      "latitude": 51.51,
+      "longitude": -0.13
+    },
+    {
+      "id": 3169070,
+      "nome": "Roma",
+      "estado": "Lácio",
+      "pais": "Itália",
+      "codigoPais": "IT",
+      "latitude": 41.89,
+      "longitude": 12.48
+    },
+    {
+      "id": 3117735,
+      "nome": "Madri",
+      "estado": "Comunidade de Madri",
+      "pais": "Espanha",
+      "codigoPais": "ES",
+      "latitude": 40.42,
+      "longitude": -3.7
+    },
+    {
+      "id": 2950159,
+      "nome": "Berlim",
+      "estado": "Berlim",
+      "pais": "Alemanha",
+      "codigoPais": "DE",
+      "latitude": 52.52,
+      "longitude": 13.41
+    },
+    {
+      "id": 3451190,
+      "nome": "Rio de Janeiro",
+      "estado": "Rio de Janeiro",
+      "pais": "Brasil",
+      "codigoPais": "BR",
+      "latitude": -22.91,
+      "longitude": -43.2
+    },
+    {
+      "id": 2147714,
+      "nome": "Sydney",
+      "estado": "Nova Gales do Sul",
+      "pais": "Austrália",
+      "codigoPais": "AU",
+      "latitude": -33.87,
+      "longitude": 151.21
+    }
+  ],
+  "countries": [
+    {
+      "id": "GB",
+      "moeda": "GBP",
+      "continente": "Europa"
+    },
+    {
+      "id": "US",
+      "moeda": "USD",
+      "continente": "América do Norte"
+    },
+    {
+      "id": "PT",
+      "moeda": "EUR",
+      "continente": "Europa"
+    },
+    {
+      "id": "ES",
+      "moeda": "EUR",
+      "continente": "Europa"
+    },
+    {
+      "id": "FR",
+      "moeda": "EUR",
+      "continente": "Europa"
+    },
+    {
+      "id": "IT",
+      "moeda": "EUR",
+      "continente": "Europa"
+    },
+    {
+      "id": "DE",
+      "moeda": "EUR",
+      "continente": "Europa"
+    },
+    {
+      "id": "JP",
+      "moeda": "JPY",
+      "continente": "Ásia"
+    },
+    {
+      "id": "AR",
+      "moeda": "ARS",
+      "continente": "América do Sul"
+    },
+    {
+      "id": "CL",
+      "moeda": "CLP",
+      "continente": "América do Sul"
+    },
+    {
+      "id": "BR",
+      "moeda": "BRL",
+      "continente": "América do Sul"
+    },
+    {
+      "id": "AU",
+      "moeda": "AUD",
+      "continente": "Oceania"
+    }
+  ],
+  "rates": [
+    {
+      "id": "GBP",
+      "codigo": "GBP",
+      "nome": "Libra esterlina",
+      "simbolo": "£",
+      "cotacao": 7.32,
+      "variacao": 0.42,
+      "atualizadoEm": "18/10/2026 14:30",
+      "historico": [
+        7.221,
+        7.261,
+        7.28,
+        7.281,
+        7.267,
+        7.248,
+        7.229,
+        7.219,
+        7.217,
+        7.222,
+        7.227,
+        7.223,
+        7.207,
+        7.178,
+        7.14,
+        7.1,
+        7.069,
+        7.055,
+        7.063,
+        7.091,
+        7.135,
+        7.183,
+        7.228,
+        7.26,
+        7.278,
+        7.285,
+        7.286,
+        7.29,
+        7.3,
+        7.32
+      ]
+    },
+    {
+      "id": "EUR",
+      "codigo": "EUR",
+      "nome": "Euro",
+      "simbolo": "€",
+      "cotacao": 6.25,
+      "variacao": -0.18,
+      "atualizadoEm": "18/10/2026 14:30",
+      "historico": [
+        6.171,
+        6.156,
+        6.136,
+        6.117,
+        6.106,
+        6.103,
+        6.106,
+        6.108,
+        6.105,
+        6.092,
+        6.068,
+        6.036,
+        6.006,
+        5.983,
+        5.975,
+        5.986,
+        6.015,
+        6.054,
+        6.097,
+        6.136,
+        6.163,
+        6.177,
+        6.182,
+        6.181,
+        6.182,
+        6.189,
+        6.203,
+        6.222,
+        6.24,
+        6.25
+      ]
+    },
+    {
+      "id": "USD",
+      "codigo": "USD",
+      "nome": "Dólar americano",
+      "simbolo": "US$",
+      "cotacao": 5.45,
+      "variacao": 0.11,
+      "atualizadoEm": "18/10/2026 14:30",
+      "historico": [
+        5.383,
+        5.369,
+        5.363,
+        5.363,
+        5.365,
+        5.364,
+        5.356,
+        5.339,
+        5.315,
+        5.289,
+        5.268,
+        5.26,
+        5.267,
+        5.29,
+        5.325,
+        5.364,
+        5.4,
+        5.428,
+        5.444,
+        5.449,
+        5.447,
+        5.445,
+        5.447,
+        5.456,
+        5.469,
+        5.484,
+        5.493,
+        5.492,
+        5.477,
+        5.45
+      ]
+    },
+    {
+      "id": "ARS",
+      "codigo": "ARS",
+      "nome": "Peso argentino",
+      "simbolo": "$",
+      "cotacao": 0.0055,
+      "variacao": -0.95,
+      "atualizadoEm": "18/10/2026 14:30",
+      "historico": [
+        0.00544,
+        0.00544,
+        0.00543,
+        0.00542,
+        0.0054,
+        0.00539,
+        0.00538,
+        0.00539,
+        0.00539,
+        0.00539,
+        0.00538,
+        0.00536,
+        0.00533,
+        0.00531,
+        0.00528,
+        0.00527,
+        0.00527,
+        0.00529,
+        0.00532,
+        0.00536,
+        0.00539,
+        0.00542,
+        0.00544,
+        0.00545,
+        0.00545,
+        0.00545,
+        0.00545,
+        0.00546,
+        0.00548,
+        0.0055
+      ]
+    },
+    {
+      "id": "JPY",
+      "codigo": "JPY",
+      "nome": "Iene japonês",
+      "simbolo": "¥",
+      "cotacao": 0.0371,
+      "variacao": 0.27,
+      "atualizadoEm": "18/10/2026 14:30",
+      "historico": [
+        0.03658,
+        0.03645,
+        0.03636,
+        0.03632,
+        0.03633,
+        0.03634,
+        0.03634,
+        0.03628,
+        0.03616,
+        0.03599,
+        0.03581,
+        0.03567,
+        0.0356,
+        0.03564,
+        0.03579,
+        0.03601,
+        0.03628,
+        0.03653,
+        0.03671,
+        0.03682,
+        0.03686,
+        0.03685,
+        0.03684,
+        0.03686,
+        0.03692,
+        0.03702,
+        0.03713,
+        0.0372,
+        0.03719,
+        0.0371
+      ]
+    },
+    {
+      "id": "CLP",
+      "codigo": "CLP",
+      "nome": "Peso chileno",
+      "simbolo": "$",
+      "cotacao": 0.0059,
+      "variacao": 0.06,
+      "atualizadoEm": "18/10/2026 14:30",
+      "historico": [
+        0.00588,
+        0.00588,
+        0.00588,
+        0.00588,
+        0.00587,
+        0.00586,
+        0.00583,
+        0.00581,
+        0.00578,
+        0.00577,
+        0.00578,
+        0.0058,
+        0.00583,
+        0.00588,
+        0.00592,
+        0.00595,
+        0.00597,
+        0.00598,
+        0.00598,
+        0.00598,
+        0.00597,
+        0.00598,
+        0.00599,
+        0.00601,
+        0.00602,
+        0.00602,
+        0.00601,
+        0.00598,
+        0.00594,
+        0.0059
+      ]
+    }
+  ],
+  "weather": [
+    {
+      "id": 1850147,
+      "atual": {
+        "temperatura": 18,
+        "sensacao": 17,
+        "umidade": 68,
+        "vento": 9,
+        "codigo": 3,
+        "maxima": 20,
+        "minima": 14
+      },
+      "diario": [
+        {
+          "data": "2026-10-18",
+          "codigo": 3,
+          "maxima": 20,
+          "minima": 14,
+          "chuva": 25
+        },
+        {
+          "data": "2026-10-19",
+          "codigo": 2,
+          "maxima": 21,
+          "minima": 14,
+          "chuva": 10
+        },
+        {
+          "data": "2026-10-20",
+          "codigo": 1,
+          "maxima": 22,
+          "minima": 15,
+          "chuva": 5
+        },
+        {
+          "data": "2026-10-21",
+          "codigo": 0,
+          "maxima": 23,
+          "minima": 15,
+          "chuva": 0
+        },
+        {
+          "data": "2026-10-22",
+          "codigo": 0,
+          "maxima": 22,
+          "minima": 16,
+          "chuva": 0
+        },
+        {
+          "data": "2026-10-23",
+          "codigo": 61,
+          "maxima": 18,
+          "minima": 14,
+          "chuva": 80
+        },
+        {
+          "data": "2026-10-24",
+          "codigo": 3,
+          "maxima": 19,
+          "minima": 13,
+          "chuva": 40
+        }
+      ]
+    },
+    {
+      "id": 2267057,
+      "atual": {
+        "temperatura": 21,
+        "sensacao": 21,
+        "umidade": 64,
+        "vento": 14,
+        "codigo": 1,
+        "maxima": 23,
+        "minima": 15
+      },
+      "diario": [
+        {
+          "data": "2026-10-18",
+          "codigo": 1,
+          "maxima": 23,
+          "minima": 15,
+          "chuva": 5
+        },
+        {
+          "data": "2026-10-19",
+          "codigo": 0,
+          "maxima": 24,
+          "minima": 16,
+          "chuva": 0
+        },
+        {
+          "data": "2026-10-20",
+          "codigo": 2,
+          "maxima": 22,
+          "minima": 15,
+          "chuva": 10
+        },
+        {
+          "data": "2026-10-21",
+          "codigo": 3,
+          "maxima": 20,
+          "minima": 14,
+          "chuva": 30
+        },
+        {
+          "data": "2026-10-22",
+          "codigo": 61,
+          "maxima": 18,
+          "minima": 13,
+          "chuva": 70
+        },
+        {
+          "data": "2026-10-23",
+          "codigo": 2,
+          "maxima": 21,
+          "minima": 14,
+          "chuva": 15
+        },
+        {
+          "data": "2026-10-24",
+          "codigo": 0,
+          "maxima": 23,
+          "minima": 15,
+          "chuva": 0
+        }
+      ]
+    },
+    {
+      "id": 2650225,
+      "atual": {
+        "temperatura": 11,
+        "sensacao": 8,
+        "umidade": 82,
+        "vento": 19,
+        "codigo": 3,
+        "maxima": 12,
+        "minima": 6
+      },
+      "diario": [
+        {
+          "data": "2026-10-18",
+          "codigo": 3,
+          "maxima": 12,
+          "minima": 6,
+          "chuva": 20
+        },
+        {
+          "data": "2026-10-19",
+          "codigo": 61,
+          "maxima": 11,
+          "minima": 7,
+          "chuva": 75
+        },
+        {
+          "data": "2026-10-20",
+          "codigo": 80,
+          "maxima": 10,
+          "minima": 5,
+          "chuva": 60
+        },
+        {
+          "data": "2026-10-21",
+          "codigo": 2,
+          "maxima": 13,
+          "minima": 6,
+          "chuva": 10
+        },
+        {
+          "data": "2026-10-22",
+          "codigo": 3,
+          "maxima": 12,
+          "minima": 7,
+          "chuva": 25
+        },
+        {
+          "data": "2026-10-23",
+          "codigo": 1,
+          "maxima": 14,
+          "minima": 8,
+          "chuva": 5
+        },
+        {
+          "data": "2026-10-24",
+          "codigo": 61,
+          "maxima": 11,
+          "minima": 6,
+          "chuva": 70
+        }
+      ]
+    },
+    {
+      "id": 3435910,
+      "atual": {
+        "temperatura": 19,
+        "sensacao": 18,
+        "umidade": 70,
+        "vento": 16,
+        "codigo": 2,
+        "maxima": 22,
+        "minima": 13
+      },
+      "diario": [
+        {
+          "data": "2026-10-18",
+          "codigo": 2,
+          "maxima": 22,
+          "minima": 13,
+          "chuva": 10
+        },
+        {
+          "data": "2026-10-19",
+          "codigo": 3,
+          "maxima": 21,
+          "minima": 14,
+          "chuva": 30
+        },
+        {
+          "data": "2026-10-20",
+          "codigo": 95,
+          "maxima": 19,
+          "minima": 14,
+          "chuva": 80
+        },
+        {
+          "data": "2026-10-21",
+          "codigo": 61,
+          "maxima": 18,
+          "minima": 12,
+          "chuva": 65
+        },
+        {
+          "data": "2026-10-22",
+          "codigo": 1,
+          "maxima": 21,
+          "minima": 11,
+          "chuva": 10
+        },
+        {
+          "data": "2026-10-23",
+          "codigo": 0,
+          "maxima": 24,
+          "minima": 13,
+          "chuva": 0
+        },
+        {
+          "data": "2026-10-24",
+          "codigo": 0,
+          "maxima": 25,
+          "minima": 15,
+          "chuva": 0
+        }
+      ]
+    },
+    {
+      "id": 3462315,
+      "atual": {
+        "temperatura": 16,
+        "sensacao": 15,
+        "umidade": 88,
+        "vento": 12,
+        "codigo": 45,
+        "maxima": 19,
+        "minima": 11
+      },
+      "diario": [
+        {
+          "data": "2026-10-18",
+          "codigo": 45,
+          "maxima": 19,
+          "minima": 11,
+          "chuva": 30
+        },
+        {
+          "data": "2026-10-19",
+          "codigo": 61,
+          "maxima": 17,
+          "minima": 12,
+          "chuva": 80
+        },
+        {
+          "data": "2026-10-20",
+          "codigo": 63,
+          "maxima": 15,
+          "minima": 11,
+          "chuva": 90
+        },
+        {
+          "data": "2026-10-21",
+          "codigo": 3,
+          "maxima": 18,
+          "minima": 10,
+          "chuva": 40
+        },
+        {
+          "data": "2026-10-22",
+          "codigo": 2,
+          "maxima": 21,
+          "minima": 12,
+          "chuva": 15
+        },
+        {
+          "data": "2026-10-23",
+          "codigo": 1,
+          "maxima": 23,
+          "minima": 13,
+          "chuva": 5
+        },
+        {
+          "data": "2026-10-24",
+          "codigo": 0,
+          "maxima": 24,
+          "minima": 14,
+          "chuva": 0
+        }
+      ]
+    },
+    {
+      "id": 3871336,
+      "atual": {
+        "temperatura": 23,
+        "sensacao": 22,
+        "umidade": 38,
+        "vento": 11,
+        "codigo": 0,
+        "maxima": 26,
+        "minima": 9
+      },
+      "diario": [
+        {
+          "data": "2026-10-18",
+          "codigo": 0,
+          "maxima": 26,
+          "minima": 9,
+          "chuva": 0
+        },
+        {
+          "data": "2026-10-19",
+          "codigo": 0,
+          "maxima": 27,
+          "minima": 10,
+          "chuva": 0
+        },
+        {
+          "data": "2026-10-20",
+          "codigo": 1,
+          "maxima": 25,
+          "minima": 10,
+          "chuva": 5
+        },
+        {
+          "data": "2026-10-21",
+          "codigo": 2,
+          "maxima": 23,
+          "minima": 9,
+          "chuva": 10
+        },
+        {
+          "data": "2026-10-22",
+          "codigo": 0,
+          "maxima": 26,
+          "minima": 11,
+          "chuva": 0
+        },
+        {
+          "data": "2026-10-23",
+          "codigo": 0,
+          "maxima": 28,
+          "minima": 12,
+          "chuva": 0
+        },
+        {
+          "data": "2026-10-24",
+          "codigo": 1,
+          "maxima": 27,
+          "minima": 11,
+          "chuva": 5
+        }
+      ]
+    }
+  ],
+  "searches": [
+    {
+      "id": 1,
+      "cityId": 2650225,
+      "cidade": "Edimburgo",
+      "pais": "Reino Unido",
+      "buscas": 14,
+      "ultimaEm": "2026-10-18T15:00:00"
+    },
+    {
+      "id": 2,
+      "cityId": 2267057,
+      "cidade": "Lisboa",
+      "pais": "Portugal",
+      "buscas": 11,
+      "ultimaEm": "2026-10-18T14:00:00"
+    },
+    {
+      "id": 3,
+      "cityId": 1850147,
+      "cidade": "Tóquio",
+      "pais": "Japão",
+      "buscas": 8,
+      "ultimaEm": "2026-10-18T13:00:00"
+    },
+    {
+      "id": 4,
+      "cityId": 3435910,
+      "cidade": "Buenos Aires",
+      "pais": "Argentina",
+      "buscas": 6,
+      "ultimaEm": "2026-10-18T12:00:00"
+    },
+    {
+      "id": 5,
+      "cityId": 2988507,
+      "cidade": "Paris",
+      "pais": "França",
+      "buscas": 4,
+      "ultimaEm": "2026-10-18T11:00:00"
+    }
+  ]
+}
