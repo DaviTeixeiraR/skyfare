@@ -104,7 +104,7 @@ interface NavItem {
     <footer class="border-t border-slate-200/70 bg-white">
       <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-sm text-slate-500 sm:flex-row sm:px-6 lg:px-8">
         <app-logo [size]="22" />
-        <p>Dados de clima: Open-Meteo · Países: REST Countries · Câmbio: AwesomeAPI</p>
+        <p>Clima e câmbio: dados de exemplo (JSON-Server)</p>
         <p>© 2026 Davi Teixeira</p>
       </div>
     </footer>

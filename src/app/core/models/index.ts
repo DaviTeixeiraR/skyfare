@@ -9,7 +9,7 @@ export interface User {
   criadoEm: string; // ISO
 }
 
-/** Cidade devolvida pela Open-Meteo Geocoding. */
+/** Cidade da coleção cities. */
 export interface City {
   id: number;
   nome: string;
@@ -77,7 +77,7 @@ export interface Weather {
   diario: DailyForecast[];
 }
 
-/** Cotação da AwesomeAPI combinada com os dados da moeda da REST Countries. */
+/** Cotação em reais da coleção rates. */
 export interface ExchangeRate {
   codigo: string;
   nome: string;

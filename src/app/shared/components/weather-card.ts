@@ -50,7 +50,7 @@ export type CardState = 'carregando' | 'erro' | 'ok';
               <p class="flex items-center gap-1.5 text-sm font-semibold text-white/85">
                 <app-icon name="thermometer" [size]="16" /> Clima agora
               </p>
-              <p class="text-xs text-white/70">Open-Meteo</p>
+              <p class="text-xs text-white/70">Dados de exemplo</p>
             </div>
 
             <div class="relative mt-4 flex items-center justify-between gap-4">

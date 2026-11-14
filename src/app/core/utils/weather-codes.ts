@@ -6,7 +6,7 @@ export interface WeatherInfo {
   tema: 'sol' | 'nuvem' | 'chuva' | 'neve' | 'tempestade';
 }
 
-/** Tradução dos códigos WMO usados pela Open-Meteo. */
+/** Tradução dos códigos de clima WMO (o mesmo padrão da Open-Meteo). */
 export function weatherInfo(codigo: number): WeatherInfo {
   if (codigo === 0) return { descricao: 'Céu limpo', icone: 'sun', tema: 'sol' };
   if (codigo <= 2) return { descricao: 'Parcialmente nublado', icone: 'cloud-sun', tema: 'sol' };

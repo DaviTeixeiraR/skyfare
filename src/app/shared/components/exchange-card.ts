@@ -40,7 +40,7 @@ import { CardState } from './weather-card';
             <p class="flex items-center gap-1.5 text-sm font-semibold text-slate-500">
               <app-icon name="coins" [size]="16" class="text-sun-500" /> Câmbio
             </p>
-            <p class="text-xs text-slate-400">AwesomeAPI</p>
+            <p class="text-xs text-slate-400">Dados de exemplo</p>
           </div>
 
           @if (domestic()) {
@@ -120,7 +120,7 @@ import { CardState } from './weather-card';
               <div>
                 <p class="text-lg font-bold text-navy-900">Moeda sem cotação</p>
                 <p class="mt-1 text-sm text-slate-500">
-                  A AwesomeAPI não tem cotação para a moeda deste país.
+                  Não há cotação cadastrada para a moeda deste país.
                 </p>
               </div>
             </div>
