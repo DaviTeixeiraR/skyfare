@@ -8,14 +8,11 @@ import {
   inject,
   LOCALE_ID,
   provideAppInitializer,
-  provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { catchError, forkJoin, of } from 'rxjs';
 import { AppRoutingModule } from './app-routing.module';
-import { errorMessage } from './core/errors';
 import { CityService } from './core/services/city.service';
 import { ExchangeService } from './core/services/exchange.service';
-import { SearchService } from './core/services/search.service';
 import { ToastService } from './core/services/toast.service';
 import { TripService } from './core/services/trip.service';
 import { UserService } from './core/services/user.service';
@@ -23,7 +20,7 @@ import { WeatherService } from './core/services/weather.service';
 
 registerLocaleData(localePt);
 
-/** Antes de abrir a primeira tela, os services buscam os dados na API (JSON-Server). */
+/** Antes de abrir a primeira tela, busca os dados na API (JSON-Server). */
 function loadData() {
   const toast = inject(ToastService);
   return forkJoin([
@@ -32,10 +29,9 @@ function loadData() {
     inject(CityService).load(),
     inject(ExchangeService).load(),
     inject(WeatherService).load(),
-    inject(SearchService).load(),
   ]).pipe(
-    catchError((e) => {
-      toast.error(errorMessage(e, 'Não foi possível carregar os dados da API.'));
+    catchError(() => {
+      toast.error('Não foi possível carregar os dados. Suba a API com: npm run api');
       return of(null);
     }),
   );
@@ -43,7 +39,6 @@ function loadData() {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideBrowserGlobalErrorListeners(),
     provideHttpClient(),
     provideAppInitializer(loadData),
     importProvidersFrom(AppRoutingModule),

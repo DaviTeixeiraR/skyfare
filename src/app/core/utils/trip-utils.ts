@@ -1,8 +1,5 @@
 import { Trip } from '../models';
 
-/** Data de referência do Skyfare: o clima e as cotações do db.json foram coletados nesse dia. */
-export const HOJE = new Date(2026, 9, 18);
-
 export type TripStatus = 'futura' | 'em-andamento' | 'realizada';
 
 const DIA = 24 * 60 * 60 * 1000;
@@ -12,20 +9,20 @@ export function toDate(iso: string): Date {
   return new Date(a, m - 1, d);
 }
 
-/** Data local no formato aaaa-mm-dd (toISOString usaria UTC e poderia mudar o dia). */
-export function toIsoDate(date: Date): string {
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}-${mm}-${dd}`;
+/** Hoje, sem a hora (para comparar só os dias). */
+export function today(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
-export function tripStatus(trip: Trip, hoje = HOJE): TripStatus {
+export function tripStatus(trip: Trip, hoje = today()): TripStatus {
   if (toDate(trip.dataVolta) < hoje) return 'realizada';
   if (toDate(trip.dataIda) <= hoje) return 'em-andamento';
   return 'futura';
 }
 
-export function daysUntil(iso: string, hoje = HOJE): number {
+export function daysUntil(iso: string, hoje = today()): number {
   return Math.round((toDate(iso).getTime() - hoje.getTime()) / DIA);
 }
 
