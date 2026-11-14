@@ -8,13 +8,12 @@ Planejador de viagens com previsão do tempo e câmbio. Você pesquisa uma cidad
 
 ## Funcionalidades
 
-- Busca de cidades com autocomplete
+- Busca de cidades com autocomplete (159 cidades de 30 países)
 - Clima atual e previsão de 7 dias
 - Cotação da moeda local em reais, com histórico de 30 dias e conversor de valores
 - Cadastro, listagem, detalhe, edição e exclusão de viagens
 - Dashboard com indicadores e gráficos
 - Login, cadastro de usuário e controle de acesso por perfil (usuário e administrador)
-- Histórico de buscas salvo na API (cidades recentes e mais pesquisadas)
 
 ## Telas
 
@@ -37,14 +36,13 @@ Os dados ficam no arquivo `db.json`, servido pelo [JSON-Server](https://github.c
 
 | Coleção | Service | Requisições |
 |---|---|---|
-| `users` | UserService / AuthService | GET, POST, PATCH, DELETE |
+| `users` | UserService | GET, POST, PATCH, DELETE |
 | `trips` | TripService | GET, POST, PUT, DELETE |
-| `searches` | SearchService | GET, POST, PATCH |
 | `cities` e `countries` | CityService | GET |
 | `rates` | ExchangeService | GET |
 | `weather` | WeatherService | GET |
 
-O clima, as cotações e as cidades do `db.json` seguem o formato das APIs [Open-Meteo](https://open-meteo.com) e [AwesomeAPI](https://docs.awesomeapi.com.br/api-de-moedas), com valores coletados em 18/10/2026.
+O `db.json` tem 30 países, as principais cidades de cada um (159 no total), a moeda e o continente de cada país, 21 cotações e o clima de todas as cidades. O clima e as cotações são **dados de exemplo** (inventados para a demonstração), no formato das APIs [Open-Meteo](https://open-meteo.com) e [AwesomeAPI](https://docs.awesomeapi.com.br/api-de-moedas).
 
 ## Tecnologias
 
@@ -73,13 +71,14 @@ Depois abra http://localhost:4200. Sem a API rodando, a aplicação abre, mas av
 
 ### Login padrão
 
-Use a conta de demonstração (gravada no `db.json`):
+O login é simples: o e-mail e a senha são conferidos com duas contas fixas no código (`src/app/core/services/auth.service.ts`), sem consultar a API.
 
 | E-mail | Senha | Perfil |
 |---|---|---|
 | skyfareuser@gmail.com | skyfare123 | Administrador |
+| ana.souza@email.com | skyfare123 | Usuário |
 
-Essa conta é administradora e abre todas as telas, inclusive Usuários. Para ver a tela de acesso negado, crie uma conta pelo cadastro: ela nasce com o perfil de usuário e não abre `/admin/usuarios`.
+O administrador abre todas as telas, inclusive Usuários. Com a conta de usuário, a tela de acesso negado aparece ao abrir `/admin/usuarios`. O cadastro grava a conta na API (aparece na tela de usuários) e já entra com ela, mas depois de sair só as duas contas acima conseguem entrar de novo.
 
 ### Testes
 
@@ -91,7 +90,7 @@ npm test
 
 ```
 src/app/
-  core/        modelos, endereço da API, services (viagens, usuários, login, cidades, câmbio, clima, buscas, avisos) e guards
+  core/        modelos, endereço da API, services (viagens, usuários, login, cidades, câmbio, clima, avisos) e guards
   app-routing.module.ts / app.routes.ts   rotas da aplicação
   layout/      layout principal (navegação) e de autenticação
   shared/      componentes reutilizáveis (cartões de clima e câmbio, busca, gráficos, ícones)
