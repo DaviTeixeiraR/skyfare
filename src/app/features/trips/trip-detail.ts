@@ -2,7 +2,6 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
-import { errorMessage } from '../../core/errors';
 import { AuthService } from '../../core/services/auth.service';
 import { ExchangeService } from '../../core/services/exchange.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -172,9 +171,9 @@ export class TripDetail {
         this.toast.success(`Viagem para ${cidade} excluída.`);
         this.router.navigate(['/viagens']);
       },
-      error: (e) => {
+      error: () => {
         this.confirming.set(false);
-        this.toast.error(errorMessage(e, 'Não foi possível excluir a viagem.'));
+        this.toast.error('Não foi possível excluir a viagem.');
       },
     });
   }

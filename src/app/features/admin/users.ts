@@ -2,13 +2,11 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { errorMessage } from '../../core/errors';
-import { Perfil, User } from '../../core/models';
+import { User } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TripService } from '../../core/services/trip.service';
-import { UserProfileFilter, UserService } from '../../core/services/user.service';
+import { UserService } from '../../core/services/user.service';
 import { ConfirmDialog } from '../../shared/components/confirm-dialog';
 import { Icon } from '../../shared/components/icon';
 import { StatCard } from '../../shared/components/stat-card';
@@ -28,7 +26,7 @@ import { StatCard } from '../../shared/components/stat-card';
     </div>
 
     <div class="mt-6 grid gap-5 sm:grid-cols-3">
-      <app-stat-card icon="users" label="Usuários cadastrados" [value]="userService.total() + ''" />
+      <app-stat-card icon="users" label="Usuários cadastrados" [value]="userService.users().length + ''" />
       <app-stat-card icon="circle-check" label="Contas ativas" [value]="userService.activeCount() + ''" tone="bg-emerald-50 text-emerald-600" />
       <app-stat-card icon="shield" label="Administradores" [value]="userService.adminCount() + ''" tone="bg-indigo-50 text-indigo-600" />
     </div>
@@ -111,7 +109,7 @@ import { StatCard } from '../../shared/components/stat-card';
           </tbody>
         </table>
       </div>
-      <p class="border-t border-slate-100 px-5 py-3 text-xs text-slate-500">Mostrando {{ visible().length }} de {{ userService.total() }} usuários</p>
+      <p class="border-t border-slate-100 px-5 py-3 text-xs text-slate-500">Mostrando {{ visible().length }} de {{ userService.users().length }} usuários</p>
     </section>
 
     <app-confirm-dialog
@@ -132,7 +130,7 @@ export class Users {
   /** Filtros da tabela (formulário reativo). */
   protected readonly filters = inject(NonNullableFormBuilder).group({
     texto: ['', Validators.maxLength(60)],
-    perfil: ['todos' as UserProfileFilter],
+    perfil: ['todos' as 'todos' | 'usuario' | 'admin'],
   });
   private readonly filterValue = toSignal(this.filters.valueChanges, { initialValue: this.filters.getRawValue() });
   /** Usuário aguardando confirmação de exclusão. */
@@ -140,7 +138,7 @@ export class Users {
 
   protected readonly visible = computed(() => this.userService.search(this.filterValue().texto ?? '', this.filterValue().perfil ?? 'todos'));
 
-  protected readonly tripCount = (u: User) => this.trips.countByUser(u.id);
+  protected readonly tripCount = (u: User) => this.trips.listByUser(u.id).length;
   /** O administrador não mexe na própria conta, para não se bloquear sem querer. */
   protected readonly isSelf = (u: User) => u.id === this.auth.user()?.id;
 
@@ -155,31 +153,26 @@ export class Users {
   }
 
   protected toggle(user: User) {
-    this.run(this.userService.toggleActive(user.id), (u) => `Conta de ${u.nome} ${u.ativo ? 'ativada' : 'desativada'}.`);
+    this.userService.update(user.id, { ativo: !user.ativo }).subscribe({
+      next: (u) => this.toast.success(`Conta de ${u.nome} ${u.ativo ? 'ativada' : 'desativada'}.`),
+      error: () => this.toast.error('Não foi possível alterar a conta.'),
+    });
   }
 
-  protected setProfile(user: User, perfil: Perfil) {
-    this.run(
-      this.userService.setProfile(user.id, perfil),
-      () => `${user.nome} agora é ${perfil === 'admin' ? 'administrador' : 'usuário'}.`,
-    );
+  protected setProfile(user: User, perfil: 'usuario' | 'admin') {
+    this.userService.update(user.id, { perfil }).subscribe({
+      next: () => this.toast.success(`${user.nome} agora é ${perfil === 'admin' ? 'administrador' : 'usuário'}.`),
+      error: () => this.toast.error('Não foi possível alterar o perfil.'),
+    });
   }
 
   protected confirmDelete() {
     const user = this.toDelete();
     this.toDelete.set(null);
     if (!user) return;
-    this.run(this.userService.remove(user.id), () => {
-      this.trips.forgetUser(user.id);
-      return `Conta de ${user.nome} excluída.`;
-    });
-  }
-
-  /** Envia a requisição e mostra o aviso de sucesso ou de erro. */
-  private run<T>(request: Observable<T>, success: (result: T) => string) {
-    request.subscribe({
-      next: (result) => this.toast.success(success(result)),
-      error: (e) => this.toast.error(errorMessage(e)),
+    this.userService.remove(user.id).subscribe({
+      next: () => this.toast.success(`Conta de ${user.nome} excluída.`),
+      error: () => this.toast.error('Não foi possível excluir a conta.'),
     });
   }
 }

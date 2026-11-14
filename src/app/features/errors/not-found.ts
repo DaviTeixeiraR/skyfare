@@ -1,9 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CityService } from '../../core/services/city.service';
-import { ExchangeService } from '../../core/services/exchange.service';
-import { WeatherService } from '../../core/services/weather.service';
-import { weatherInfo } from '../../core/utils/weather-codes';
 import { CitySearch } from '../../shared/components/city-search';
 import { Flag } from '../../shared/components/flag';
 import { Icon } from '../../shared/components/icon';
@@ -47,11 +44,6 @@ import { Icon } from '../../shared/components/icon';
             <div class="min-w-0 flex-1">
               <p class="truncate font-bold text-navy-900">{{ d.nome }}</p>
               <p class="truncate text-xs text-slate-500">{{ d.pais }}</p>
-              <p class="mt-1 text-xs font-semibold text-sun-600">{{ d.cotacao }}</p>
-            </div>
-            <div class="text-right">
-              <app-icon [name]="d.icone" [size]="26" [stroke]="1.6" class="text-brand-600" />
-              <p class="text-sm font-bold text-navy-900">{{ d.temperatura }}°</p>
             </div>
           </a>
         }
@@ -62,22 +54,8 @@ import { Icon } from '../../shared/components/icon';
 export class NotFound {
   private readonly router = inject(Router);
   private readonly cities = inject(CityService);
-  private readonly weatherService = inject(WeatherService);
-  private readonly exchange = inject(ExchangeService);
 
-  protected readonly destinations = ['Edimburgo', 'Lisboa', 'Tóquio', 'Buenos Aires'].flatMap((nome) => {
-    const city = this.cities.getByName(nome);
-    if (!city) return [];
-    const weather = this.weatherService.getByCity(city.id);
-    const rate = this.exchange.getRate(this.exchange.currencyOf(city.codigoPais));
-    const valor = !rate ? '' : rate.cotacao < 0.1 ? rate.cotacao.toFixed(4) : rate.cotacao.toFixed(2);
-    return {
-      ...city,
-      temperatura: weather.atual.temperatura,
-      icone: weatherInfo(weather.atual.codigo).icone,
-      cotacao: rate ? `1 ${rate.codigo} = R$ ${valor.replace('.', ',')}` : '',
-    };
-  });
+  protected readonly destinations = ['Edimburgo', 'Lisboa', 'Tóquio', 'Buenos Aires'].flatMap((nome) => this.cities.getByName(nome) ?? []);
 
   protected go() {
     this.router.navigateByUrl('/');

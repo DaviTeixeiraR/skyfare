@@ -1,88 +1,47 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { map, Observable, tap } from 'rxjs';
-import { BusinessError } from '../errors';
-import { NewUser, User } from '../models';
+import { tap } from 'rxjs';
+import { User } from '../models';
 import { UserService } from './user.service';
 
-const SESSION_KEY = 'skyfare.sessao';
+/** Usuário logado: só o que o menu e as telas precisam. */
+export type Sessao = Pick<User, 'id' | 'nome' | 'email' | 'perfil'>;
 
-/** Sessão do usuário: login e cadastro de conta consultam a API pelo UserService. */
+/** Contas fixas no código (login simples, sem consultar a API). */
+const CONTAS = [
+  { email: 'skyfareuser@gmail.com', senha: 'skyfare123', usuario: { id: 1, nome: 'Davi Teixeira', email: 'skyfareuser@gmail.com', perfil: 'admin' } },
+  { email: 'ana.souza@email.com', senha: 'skyfare123', usuario: { id: 2, nome: 'Ana Carolina Souza', email: 'ana.souza@email.com', perfil: 'usuario' } },
+] as const;
+
+const CHAVE = 'skyfare.usuario';
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly users = inject(UserService);
-  private readonly userId = signal<number | null>(this.restoreSession());
 
-  /**
-   * Usuário logado. Sai da lista do UserService, então mudanças feitas pelo
-   * administrador (perfil, conta desativada ou excluída) valem na hora.
-   */
-  readonly user = computed<User | null>(() => {
-    const id = this.userId();
-    const user = id === null ? null : this.users.getById(id);
-    return user?.ativo ? user : null;
-  });
+  /** Usuário logado (null se ninguém entrou). Fica guardado no navegador para valer depois de recarregar. */
+  readonly user = signal<Sessao | null>(JSON.parse(localStorage.getItem(CHAVE) ?? 'null'));
   readonly isLoggedIn = computed(() => this.user() !== null);
   readonly isAdmin = computed(() => this.user()?.perfil === 'admin');
 
-  /** Procura o e-mail na API (GET /users?email=) e confere a senha. */
-  login(email: string, senha: string, lembrar = true): Observable<User> {
-    return this.users.fetchByEmail(email).pipe(
-      map((user) => {
-        if (!user || user.senha !== senha) throw new BusinessError('E-mail ou senha incorretos.');
-        if (!user.ativo) throw new BusinessError('Esta conta está desativada. Fale com um administrador.');
-        return user;
-      }),
-      tap((user) => {
-        this.users.upsert(user);
-        this.userId.set(user.id);
-        this.saveSession(user.id, lembrar);
-      }),
-    );
+  /** Confere e-mail e senha com as contas fixas. Devolve true se entrou. */
+  login(email: string, senha: string) {
+    const conta = CONTAS.find((c) => c.email === email && c.senha === senha);
+    if (conta) this.entrar({ ...conta.usuario });
+    return !!conta;
   }
 
-  /** Cria a conta (perfil usuário) pela API e já entra com ela. */
-  register(data: Omit<NewUser, 'perfil'>): Observable<User> {
-    return this.users.create({ ...data, perfil: 'usuario' }).pipe(
-      tap((user) => {
-        this.userId.set(user.id);
-        this.saveSession(user.id, true);
-      }),
-    );
+  /** Cria a conta na API (perfil usuário) e já entra com ela. */
+  register(nome: string, email: string) {
+    return this.users.create(nome, email).pipe(tap((u) => this.entrar({ id: u.id, nome: u.nome, email: u.email, perfil: u.perfil })));
   }
 
-  logout(): void {
-    this.userId.set(null);
-    this.storages().forEach((s) => s.removeItem(SESSION_KEY));
+  logout() {
+    this.user.set(null);
+    localStorage.removeItem(CHAVE);
   }
 
-  /** O navegador pode bloquear o storage (modo privado), por isso tudo passa por try/catch. */
-  private storages(): Storage[] {
-    try {
-      return [localStorage, sessionStorage];
-    } catch {
-      return [];
-    }
-  }
-
-  private saveSession(id: number, lembrar: boolean) {
-    const [local, session] = this.storages();
-    try {
-      this.storages().forEach((s) => s.removeItem(SESSION_KEY));
-      (lembrar ? local : session)?.setItem(SESSION_KEY, String(id));
-    } catch {
-      /* sem storage a sessão vale só até recarregar a página */
-    }
-  }
-
-  private restoreSession(): number | null {
-    for (const storage of this.storages()) {
-      try {
-        const id = Number(storage.getItem(SESSION_KEY));
-        if (id) return id;
-      } catch {
-        /* ignora */
-      }
-    }
-    return null;
+  private entrar(sessao: Sessao) {
+    this.user.set(sessao);
+    localStorage.setItem(CHAVE, JSON.stringify(sessao));
   }
 }

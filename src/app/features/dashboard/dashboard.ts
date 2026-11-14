@@ -3,12 +3,10 @@ import { RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
 import { Trip } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
-import { ExchangeService } from '../../core/services/exchange.service';
-import { SearchService } from '../../core/services/search.service';
 import { TripService } from '../../core/services/trip.service';
 import { UserService } from '../../core/services/user.service';
 import { WeatherService } from '../../core/services/weather.service';
-import { daysUntil, toDate, tripStatus } from '../../core/utils/trip-utils';
+import { daysUntil, toDate, today, tripStatus } from '../../core/utils/trip-utils';
 import { weatherInfo } from '../../core/utils/weather-codes';
 import { ChartView } from '../../shared/components/chart';
 import { Flag } from '../../shared/components/flag';
@@ -24,19 +22,12 @@ const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, StatCard, ChartView, Flag, Icon],
   template: `
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 class="text-3xl font-extrabold tracking-tight text-navy-900">Dashboard</h1>
-        <p class="mt-1 text-slate-500">Resumo das suas viagens e das moedas dos seus destinos.</p>
-      </div>
-      <span class="badge bg-white px-3 py-1.5 text-slate-600 ring-1 ring-slate-200">
-        <app-icon name="calendar" [size]="14" /> Atualizado em 18/10/2026
-      </span>
-    </div>
+    <h1 class="text-3xl font-extrabold tracking-tight text-navy-900">Dashboard</h1>
+    <p class="mt-1 text-slate-500">Resumo das suas viagens.</p>
 
     <div class="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
       <app-stat-card icon="plane-takeoff" label="Viagens planejadas" [value]="planned.length + ''" [hint]="planned.length ? 'Próxima em ' + nextDays + ' dias' : 'Nenhuma viagem futura'" />
-      <app-stat-card icon="circle-check" label="Viagens realizadas" [value]="done.length + ''" hint="Em 2026" tone="bg-emerald-50 text-emerald-600" />
+      <app-stat-card icon="circle-check" label="Viagens realizadas" [value]="done.length + ''" hint="Já concluídas" tone="bg-emerald-50 text-emerald-600" />
       <app-stat-card icon="wallet" label="Orçamento planejado" [value]="plannedBudget" hint="Soma das viagens futuras" tone="bg-sun-50 text-sun-600" />
       <app-stat-card icon="coins" label="Média por viagem" [value]="averageBudget" hint="Considerando todas as viagens" tone="bg-indigo-50 text-indigo-600" />
     </div>
@@ -45,7 +36,7 @@ const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL',
       <section class="card p-6 lg:col-span-2">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="font-bold text-navy-900">Orçamento por mês de embarque</h2>
-          <span class="text-xs text-slate-400">jun/2026 a jul/2027</span>
+          <span class="text-xs text-slate-400">próximos 12 meses</span>
         </div>
         <app-chart class="h-64" [config]="monthsChart" label="Orçamento por mês" />
       </section>
@@ -56,14 +47,6 @@ const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL',
     </div>
 
     <div class="mt-5 grid gap-5 lg:grid-cols-3">
-      <section class="card p-6 lg:col-span-2">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="font-bold text-navy-900">Variação das moedas dos próximos destinos</h2>
-          <span class="text-xs text-slate-400">Últimos 30 dias, em %</span>
-        </div>
-        <app-chart class="h-64" [config]="currencyChart" label="Variação das moedas em 30 dias" />
-      </section>
-
       <section class="card p-6">
         <h2 class="mb-4 font-bold text-navy-900">Próximas viagens</h2>
         <ul class="space-y-3">
@@ -80,25 +63,8 @@ const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL',
                 </span>
               </a>
             </li>
-          }
-        </ul>
-      </section>
-    </div>
-
-    <div class="mt-5 grid gap-5 lg:grid-cols-3">
-      <section class="card p-6">
-        <h2 class="mb-4 font-bold text-navy-900">Cidades mais pesquisadas</h2>
-        <ul class="space-y-3.5">
-          @for (c of topCities; track c.cidade; let i = $index) {
-            <li>
-              <div class="mb-1 flex justify-between text-sm">
-                <span class="font-semibold text-navy-900">{{ i + 1 }}. {{ c.cidade }} <span class="font-normal text-slate-400">· {{ c.pais }}</span></span>
-                <span class="text-slate-500">{{ c.buscas }} buscas</span>
-              </div>
-              <div class="h-2 rounded-full bg-slate-100">
-                <div class="h-2 rounded-full bg-brand-500" [style.width.%]="(c.buscas / topCities[0].buscas) * 100"></div>
-              </div>
-            </li>
+          } @empty {
+            <li class="text-sm text-slate-500">Nenhuma viagem futura.</li>
           }
         </ul>
       </section>
@@ -114,142 +80,88 @@ const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL',
           <div class="grid gap-4 sm:grid-cols-3">
             <div class="rounded-xl bg-slate-50 p-4">
               <p class="text-sm text-slate-500">Usuários cadastrados</p>
-              <p class="mt-1 text-3xl font-extrabold text-navy-900">{{ users.length }}</p>
+              <p class="mt-1 text-3xl font-extrabold text-navy-900">{{ userService.users().length }}</p>
             </div>
             <div class="rounded-xl bg-slate-50 p-4">
               <p class="text-sm text-slate-500">Usuários ativos</p>
-              <p class="mt-1 text-3xl font-extrabold text-emerald-600">{{ activeUsers }}</p>
+              <p class="mt-1 text-3xl font-extrabold text-emerald-600">{{ userService.activeCount() }}</p>
             </div>
             <div class="rounded-xl bg-slate-50 p-4">
               <p class="text-sm text-slate-500">Viagens no sistema</p>
-              <p class="mt-1 text-3xl font-extrabold text-brand-700">{{ totalTrips }}</p>
+              <p class="mt-1 text-3xl font-extrabold text-brand-700">{{ tripService.trips().length }}</p>
             </div>
           </div>
-          <p class="mt-4 flex items-center gap-1.5 text-xs text-slate-500">
-            <app-icon name="info" [size]="14" /> Este bloco só aparece para usuários com perfil de administrador.
-          </p>
         </section>
       }
     </div>
   `,
 })
 export class Dashboard {
+  protected readonly tripService = inject(TripService);
+  protected readonly userService = inject(UserService);
   private readonly auth = inject(AuthService);
-  private readonly tripService = inject(TripService);
-  private readonly userService = inject(UserService);
   private readonly weatherService = inject(WeatherService);
-  private readonly exchange = inject(ExchangeService);
-
-  /** Viagens do usuário logado (a tela é recriada a cada visita, então já vem atualizada). */
-  private readonly trips = this.tripService.listByUser(this.auth.user()?.id ?? 0);
 
   protected readonly isAdmin = this.auth.isAdmin();
-  protected readonly users = this.userService.users();
-  protected readonly activeUsers = this.userService.activeCount();
-  protected readonly totalTrips = this.tripService.total();
-  protected readonly topCities = inject(SearchService).top();
 
-  protected readonly planned = this.trips.filter((t) => tripStatus(t) === 'futura').sort(
-    (a, b) => toDate(a.dataIda).getTime() - toDate(b.dataIda).getTime(),
-  );
+  /** Viagens do usuário logado (a tela é recriada a cada visita, então já vem atualizada). */
+  private readonly trips = this.tripService.listByUser(this.auth.user()!.id);
+
+  protected readonly planned = this.trips
+    .filter((t) => tripStatus(t) === 'futura')
+    .sort((a, b) => toDate(a.dataIda).getTime() - toDate(b.dataIda).getTime());
   protected readonly done = this.trips.filter((t) => tripStatus(t) === 'realizada');
   protected readonly nextDays = this.planned[0] ? daysUntil(this.planned[0].dataIda) : 0;
-  protected readonly plannedBudget = brl.format(this.planned.reduce((s, t) => s + t.orcamentoBRL, 0));
+  protected readonly plannedBudget = brl.format(this.planned.reduce((soma, t) => soma + t.orcamentoBRL, 0));
   protected readonly averageBudget = brl.format(
-    this.trips.reduce((s, t) => s + t.orcamentoBRL, 0) / (this.trips.length || 1),
+    this.trips.reduce((soma, t) => soma + t.orcamentoBRL, 0) / (this.trips.length || 1),
   );
 
   protected countdown = (t: Trip) => daysUntil(t.dataIda);
   protected weatherIcon = (t: Trip) => weatherInfo(this.weatherService.getByCity(t.cityId).atual.codigo).icone;
   protected temperature = (t: Trip) => this.weatherService.getByCity(t.cityId).atual.temperatura;
 
+  /** Gráfico de barras: orçamento das viagens que embarcam em cada um dos próximos 12 meses. */
   protected readonly monthsChart: ChartConfiguration = (() => {
     const labels: string[] = [];
     const values: number[] = [];
-    const colors: string[] = [];
-    for (let i = 0; i < 14; i++) {
-      const d = new Date(2026, 5 + i, 1);
-      labels.push(`${MESES[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`);
-      const trips = this.trips.filter((t) => {
+    for (let i = 0; i < 12; i++) {
+      const mes = new Date(today().getFullYear(), today().getMonth() + i, 1);
+      labels.push(`${MESES[mes.getMonth()]}/${String(mes.getFullYear()).slice(2)}`);
+      const doMes = this.trips.filter((t) => {
         const ida = toDate(t.dataIda);
-        return ida.getMonth() === d.getMonth() && ida.getFullYear() === d.getFullYear();
+        return ida.getMonth() === mes.getMonth() && ida.getFullYear() === mes.getFullYear();
       });
-      values.push(trips.reduce((s, t) => s + t.orcamentoBRL, 0));
-      colors.push(trips.some((t) => tripStatus(t) === 'realizada') ? '#94a3b8' : '#3381fc');
+      values.push(doMes.reduce((soma, t) => soma + t.orcamentoBRL, 0));
     }
     return {
       type: 'bar',
-      data: { labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 8, maxBarThickness: 34 }] },
+      data: { labels, datasets: [{ data: values, backgroundColor: '#3381fc', borderRadius: 8, maxBarThickness: 34 }] },
       options: {
         animation: false,
         maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: (c) => brl.format(c.parsed.y ?? 0) } },
-        },
-        scales: {
-          x: { grid: { display: false } },
-          y: { grid: { color: '#eef2f7' }, ticks: { callback: (v) => 'R$ ' + Number(v) / 1000 + ' mil' } },
-        },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => brl.format(c.parsed.y ?? 0) } } },
+        scales: { y: { ticks: { callback: (v) => 'R$ ' + Number(v) / 1000 + ' mil' } } },
       },
     };
   })();
 
+  /** Gráfico de rosca: quantas viagens há em cada continente. */
   protected readonly continentChart: ChartConfiguration = (() => {
-    const counts = new Map<string, number>();
-    this.trips.forEach((t) => counts.set(t.continente, (counts.get(t.continente) ?? 0) + 1));
+    const contagem = new Map<string, number>();
+    this.trips.forEach((t) => contagem.set(t.continente, (contagem.get(t.continente) ?? 0) + 1));
     return {
       type: 'doughnut',
       data: {
-        labels: [...counts.keys()],
+        labels: [...contagem.keys()],
         datasets: [
           {
-            data: [...counts.values()],
-            backgroundColor: ['#3381fc', '#f59e0b', '#0b1b3f', '#14b8a6'],
-            borderWidth: 3,
-            borderColor: '#fff',
+            data: [...contagem.values()],
+            backgroundColor: ['#3381fc', '#f59e0b', '#0b1b3f', '#14b8a6', '#ef4444', '#8b5cf6'],
           },
         ],
       },
-      options: {
-        animation: false,
-        maintainAspectRatio: false,
-        cutout: '62%',
-        plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, padding: 16 } } },
-      },
-    };
-  })();
-
-  protected readonly currencyChart: ChartConfiguration = (() => {
-    const palette = ['#3381fc', '#f59e0b', '#14b8a6', '#0b1b3f'];
-    const codes = [...new Set(this.planned.map((t) => t.moeda))].filter((c) => this.exchange.getRate(c));
-    return {
-      type: 'line',
-      data: {
-        labels: Array.from({ length: 30 }, (_, i) => (i === 29 ? 'Hoje' : `-${29 - i}d`)),
-        datasets: codes.map((code, i) => {
-          const h = this.exchange.getRate(code)!.historico;
-          return {
-            label: code,
-            data: h.map((v) => +(((v - h[0]) / h[0]) * 100).toFixed(2)),
-            borderColor: palette[i % palette.length],
-            backgroundColor: palette[i % palette.length],
-            tension: 0.35,
-            pointRadius: 0,
-            borderWidth: 2.2,
-          };
-        }),
-      },
-      options: {
-        animation: false,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, padding: 14 } } },
-        scales: {
-          x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } },
-          y: { grid: { color: '#eef2f7' }, ticks: { callback: (v) => v + '%' } },
-        },
-      },
+      options: { animation: false, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } },
     };
   })();
 }

@@ -7,16 +7,6 @@ export interface User {
   perfil: Perfil;
   ativo: boolean;
   criadoEm: string; // ISO
-  /** Senha guardada no db.json do JSON-Server (projeto didático, sem criptografia). */
-  senha?: string;
-}
-
-/** Dados informados no cadastro de uma conta. */
-export interface NewUser {
-  nome: string;
-  email: string;
-  senha: string;
-  perfil?: Perfil;
 }
 
 /** Cidade devolvida pela Open-Meteo Geocoding. */
@@ -108,14 +98,4 @@ export interface Country {
   id: string;
   moeda: string;
   continente: Continente;
-}
-
-/** Item do histórico de buscas (coleção searches). */
-export interface SearchEntry {
-  id: number;
-  cityId: number;
-  cidade: string;
-  pais: string;
-  buscas: number;
-  ultimaEm: string; // ISO
 }

@@ -3,7 +3,6 @@ import { RouterLink } from '@angular/router';
 import { City } from '../../core/models';
 import { CityService } from '../../core/services/city.service';
 import { ExchangeService } from '../../core/services/exchange.service';
-import { SearchService } from '../../core/services/search.service';
 import { WeatherService } from '../../core/services/weather.service';
 import { CitySearch } from '../../shared/components/city-search';
 import { ExchangeCard } from '../../shared/components/exchange-card';
@@ -33,19 +32,7 @@ import { WeatherCard } from '../../shared/components/weather-card';
     </section>
 
     <div class="relative z-10 mx-auto -mt-20 max-w-3xl">
-      <app-city-search [initial]="city()?.nome ?? ''" (selected)="choose($event)" />
-      <div class="mt-3 flex flex-wrap items-center gap-2 px-1 text-sm">
-        <span class="flex items-center gap-1 text-slate-500"><app-icon name="history" [size]="15" /> Recentes:</span>
-        @for (s of searches.recent(); track s.id) {
-          <button type="button" (click)="pick(s.cityId)"
-                  class="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-600 hover:border-brand-300 hover:text-brand-700"
-                  [class.!border-brand-300]="s.cityId === city()?.id" [class.!text-brand-700]="s.cityId === city()?.id">
-            {{ s.cidade }}
-          </button>
-        } @empty {
-          <span class="text-slate-400">nenhuma busca ainda</span>
-        }
-      </div>
+      <app-city-search (selected)="city.set($event)" />
     </div>
 
     @if (city(); as city) {
@@ -60,13 +47,7 @@ import { WeatherCard } from '../../shared/components/weather-card';
             </p>
           </div>
         </div>
-        <div class="flex gap-2">
-          <button type="button" class="btn btn-secondary" (click)="favorite.set(!favorite())">
-            <app-icon name="star" [size]="17" [fill]="favorite() ? 'currentColor' : 'none'" [class]="favorite() ? 'text-sun-500' : ''" />
-            {{ favorite() ? 'Favorita' : 'Favoritar' }}
-          </button>
-          <a routerLink="/viagens/nova" [queryParams]="{ cidade: city.id }" class="btn btn-primary"><app-icon name="plus" [size]="17" /> Salvar como viagem</a>
-        </div>
+        <a routerLink="/viagens/nova" [queryParams]="{ cidade: city.id }" class="btn btn-primary"><app-icon name="plus" [size]="17" /> Salvar como viagem</a>
       </div>
 
       <div class="grid gap-5 lg:grid-cols-2">
@@ -82,26 +63,11 @@ export class Home {
   private readonly cities = inject(CityService);
   private readonly weatherService = inject(WeatherService);
   private readonly exchange = inject(ExchangeService);
-  protected readonly searches = inject(SearchService);
 
-  /** Começa pela última cidade pesquisada (ou Edimburgo, se o histórico estiver vazio). */
-  protected readonly city = signal<City | undefined>(
-    this.cities.getById(this.searches.recent()[0]?.cityId ?? 2650225),
-  );
-  protected readonly favorite = signal(true);
+  /** Cidade mostrada na tela (começa por Edimburgo). */
+  protected readonly city = signal<City | undefined>(this.cities.getByName('Edimburgo'));
 
-  protected readonly weather = computed(() => this.weatherService.getByCity(this.city()?.id ?? 0));
-  protected readonly currency = computed(() => this.exchange.currencyOf(this.city()?.codigoPais ?? ''));
+  protected readonly weather = computed(() => this.weatherService.getByCity(this.city()!.id));
+  protected readonly currency = computed(() => this.cities.currencyOf(this.city()!.codigoPais));
   protected readonly rate = computed(() => this.exchange.getRate(this.currency()));
-
-  /** Mostra a cidade escolhida e grava a busca no histórico da API. */
-  protected choose(city: City) {
-    this.city.set(city);
-    this.searches.register(city).subscribe({ error: () => undefined });
-  }
-
-  protected pick(cityId: number) {
-    const found = this.cities.getById(cityId);
-    if (found) this.choose(found);
-  }
 }
