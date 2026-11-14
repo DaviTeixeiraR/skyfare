@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { errorMessage } from '../../core/errors';
 import { AuthService } from '../../core/services/auth.service';
 import { Icon } from '../../shared/components/icon';
 
@@ -32,30 +31,18 @@ import { Icon } from '../../shared/components/icon';
       </div>
 
       <div>
-        <div class="mb-1.5 flex items-center justify-between">
-          <label class="label !mb-0" for="senha">Senha</label>
-          <a href="#" class="text-sm font-semibold text-brand-600 hover:text-brand-700" (click)="$event.preventDefault()">Esqueci a senha</a>
-        </div>
+        <label class="label" for="senha">Senha</label>
         <div class="relative">
           <app-icon name="lock" [size]="18" class="absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
-          <input id="senha" [type]="showPassword() ? 'text' : 'password'" class="input !px-10" placeholder="Sua senha"
-                 formControlName="senha" [class.input-invalid]="invalid('senha')" />
-          <button type="button" class="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'" (click)="showPassword.set(!showPassword())">
-            <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="18" />
-          </button>
+          <input id="senha" type="password" class="input !pl-10" placeholder="Sua senha" formControlName="senha"
+                 [class.input-invalid]="invalid('senha')" />
         </div>
         @if (invalid('senha')) {
           <p class="field-error"><app-icon name="circle-alert" [size]="14" /> A senha é obrigatória.</p>
         }
       </div>
 
-      <label class="flex items-center gap-2 text-sm text-slate-600">
-        <input type="checkbox" class="size-4 rounded border-slate-300 accent-brand-600" formControlName="lembrar" />
-        Manter conectado
-      </label>
-
-      <button type="submit" class="btn btn-primary w-full !py-3" [disabled]="sending()">{{ sending() ? 'Entrando...' : 'Entrar' }}</button>
+      <button type="submit" class="btn btn-primary w-full !py-3">Entrar</button>
     </form>
 
     <div class="my-8 flex items-center gap-3 text-xs font-medium text-slate-400">
@@ -73,24 +60,18 @@ import { Icon } from '../../shared/components/icon';
   `,
 })
 export class Login {
-  /** Rota que o guard guardou em ?redirectTo= antes de mandar para o login. */
-  readonly redirectTo = input<string>();
-
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
-  protected readonly showPassword = signal(false);
   protected readonly error = signal('');
-  protected readonly sending = signal(false);
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     email: ['', [Validators.required, Validators.email]],
     senha: ['', Validators.required],
-    lembrar: [true],
   });
 
   protected invalid(name: 'email' | 'senha') {
     const control = this.form.controls[name];
-    return control.invalid && (control.touched || control.dirty);
+    return control.invalid && control.touched;
   }
 
   protected submit() {
@@ -98,19 +79,11 @@ export class Login {
       this.form.markAllAsTouched();
       return;
     }
-    const { email, senha, lembrar } = this.form.getRawValue();
-    this.error.set('');
-    this.sending.set(true);
-    this.auth.login(email, senha, lembrar).subscribe({
-      next: () => {
-        // Só aceita caminhos internos, para o link do login não levar a outro site.
-        const target = this.redirectTo();
-        this.router.navigateByUrl(target?.startsWith('/') && !target.startsWith('//') ? target : '/viagens');
-      },
-      error: (e) => {
-        this.sending.set(false);
-        this.error.set(errorMessage(e, 'Não foi possível entrar. Tente de novo.'));
-      },
-    });
+    const { email, senha } = this.form.getRawValue();
+    if (this.auth.login(email, senha)) {
+      this.router.navigateByUrl('/viagens');
+    } else {
+      this.error.set('E-mail ou senha incorretos.');
+    }
   }
 }

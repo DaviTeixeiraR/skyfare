@@ -3,12 +3,11 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { errorMessage } from '../../core/errors';
 import { Trip } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
 import { ExchangeService } from '../../core/services/exchange.service';
 import { ToastService } from '../../core/services/toast.service';
-import { TripService, TripSort } from '../../core/services/trip.service';
+import { TripService } from '../../core/services/trip.service';
 import {
   daysUntil,
   STATUS_CLASS,
@@ -165,7 +164,7 @@ export class TripList {
   /** Filtros da lista (formulário reativo). */
   protected readonly filters = inject(NonNullableFormBuilder).group({
     texto: ['', Validators.maxLength(60)],
-    ordem: ['data' as TripSort],
+    ordem: ['data' as 'data' | 'orcamento'],
   });
   private readonly filterValue = toSignal(this.filters.valueChanges, { initialValue: this.filters.getRawValue() });
   protected readonly filter = signal<Filter>('todas');
@@ -206,7 +205,7 @@ export class TripList {
     this.toDelete.set(null);
     this.tripService.remove(trip.id).subscribe({
       next: () => this.toast.success(`Viagem para ${trip.cidade} excluída.`),
-      error: (e) => this.toast.error(errorMessage(e, 'Não foi possível excluir a viagem.')),
+      error: () => this.toast.error('Não foi possível excluir a viagem.'),
     });
   }
 }

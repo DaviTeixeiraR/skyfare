@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { City } from '../../core/models';
@@ -59,7 +59,6 @@ import { Icon } from './icon';
 export class CitySearch {
   readonly placeholder = input('Para onde você vai? Digite uma cidade');
   readonly compact = input(false);
-  readonly initial = input('');
   readonly selected = output<City>();
 
   private readonly cities = inject(CityService);
@@ -69,11 +68,6 @@ export class CitySearch {
   protected readonly open = signal(false);
 
   protected readonly suggestions = computed(() => this.cities.search(this.term()));
-
-  constructor() {
-    // Mostra no campo o nome recebido pelo input initial (ex.: a cidade aberta na busca rápida).
-    effect(() => this.query.setValue(this.initial()));
-  }
 
   protected select(city: City) {
     this.query.setValue(city.nome);

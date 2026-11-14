@@ -1,20 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import {
-  AbstractControl,
-  NonNullableFormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { errorMessage } from '../../core/errors';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
+import { UserService } from '../../core/services/user.service';
 import { Icon } from '../../shared/components/icon';
 
-function passwordsMatch(group: AbstractControl): ValidationErrors | null {
-  const { senha, confirmacao } = group.value as { senha: string; confirmacao: string };
+/** Validador do grupo: a confirmação precisa ser igual à senha. */
+function passwordsMatch(group: AbstractControl) {
+  const { senha, confirmacao } = group.value;
   return confirmacao && senha !== confirmacao ? { senhasDiferentes: true } : null;
 }
 
@@ -61,30 +55,21 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
           <label class="label" for="senha">Senha</label>
           <input id="senha" type="password" class="input" placeholder="Mínimo de 8 caracteres" formControlName="senha"
                  [class.input-invalid]="invalid('senha')" />
+          @if (invalid('senha')) {
+            <p class="field-error"><app-icon name="circle-alert" [size]="14" /> Mínimo de 8 caracteres.</p>
+          }
         </div>
         <div>
           <label class="label" for="confirmacao">Confirmar senha</label>
           <input id="confirmacao" type="password" class="input" placeholder="Repita a senha" formControlName="confirmacao"
                  [class.input-invalid]="mismatch()" />
-        </div>
-      </div>
-
-      <div>
-        <div class="flex gap-1.5" aria-hidden="true">
-          @for (i of [0, 1, 2, 3]; track i) {
-            <span class="h-1.5 flex-1 rounded-full" [class]="i < strength() ? strengthColor() : 'bg-slate-200'"></span>
+          @if (mismatch()) {
+            <p class="field-error"><app-icon name="circle-alert" [size]="14" /> As senhas não são iguais.</p>
           }
         </div>
-        <p class="mt-1.5 text-xs text-slate-500">Força da senha: <strong class="font-semibold">{{ strengthLabel() }}</strong></p>
-        @if (invalid('senha')) {
-          <p class="field-error"><app-icon name="circle-alert" [size]="14" /> A senha precisa ter pelo menos 8 caracteres.</p>
-        }
-        @if (mismatch()) {
-          <p class="field-error"><app-icon name="circle-alert" [size]="14" /> As senhas não são iguais.</p>
-        }
       </div>
 
-      <button type="submit" class="btn btn-primary w-full !py-3" [disabled]="sending()">
+      <button type="submit" class="btn btn-primary w-full !py-3">
         <app-icon name="user-plus" [size]="17" /> Criar conta
       </button>
     </form>
@@ -98,9 +83,9 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
 export class Register {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  private readonly users = inject(UserService);
   private readonly toast = inject(ToastService);
   protected readonly error = signal('');
-  protected readonly sending = signal(false);
 
   protected readonly form = inject(NonNullableFormBuilder).group(
     {
@@ -112,52 +97,31 @@ export class Register {
     { validators: passwordsMatch },
   );
 
-  private readonly password = toSignal(this.form.controls.senha.valueChanges, { initialValue: '' });
-  private readonly submitted = signal(false);
-
-  protected readonly strength = computed(() => {
-    const s = this.password();
-    let score = 0;
-    if (s.length >= 8) score++;
-    if (/[A-Z]/.test(s) && /[a-z]/.test(s)) score++;
-    if (/\d/.test(s)) score++;
-    if (/[^A-Za-z0-9]/.test(s)) score++;
-    return score;
-  });
-  protected readonly strengthLabel = computed(
-    () => ['Muito fraca', 'Fraca', 'Média', 'Boa', 'Forte'][this.strength()],
-  );
-  protected readonly strengthColor = computed(
-    () => ['bg-red-400', 'bg-red-400', 'bg-sun-400', 'bg-emerald-400', 'bg-emerald-500'][this.strength()],
-  );
-
   protected invalid(name: 'nome' | 'email' | 'senha') {
     const control = this.form.controls[name];
-    return control.invalid && (control.touched || control.dirty || this.submitted());
+    return control.invalid && control.touched;
   }
 
   protected mismatch() {
-    return this.form.hasError('senhasDiferentes') && this.form.controls.confirmacao.dirty;
+    return this.form.hasError('senhasDiferentes') && this.form.controls.confirmacao.touched;
   }
 
   protected submit() {
-    this.submitted.set(true);
-    this.error.set('');
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-    const { nome, email, senha } = this.form.getRawValue();
-    this.sending.set(true);
-    this.auth.register({ nome, email, senha }).subscribe({
+    const { nome, email } = this.form.getRawValue();
+    if (this.users.emailExists(email)) {
+      this.error.set('Já existe uma conta com este e-mail.');
+      return;
+    }
+    this.auth.register(nome, email).subscribe({
       next: () => {
         this.toast.success('Conta criada. Bem-vindo ao Skyfare!');
         this.router.navigateByUrl('/viagens');
       },
-      error: (e) => {
-        this.sending.set(false);
-        this.error.set(errorMessage(e, 'Não foi possível criar a conta.'));
-      },
+      error: () => this.error.set('Não foi possível criar a conta.'),
     });
   }
 }
