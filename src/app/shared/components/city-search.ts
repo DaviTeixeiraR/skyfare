@@ -1,29 +1,16 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  linkedSignal,
-  output,
-  signal,
-} from '@angular/core';
-import { CIDADES } from '../../core/mock/mock-data';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { City } from '../../core/models';
+import { CityService } from '../../core/services/city.service';
 import { Flag } from './flag';
 import { Icon } from './icon';
 
-function normalize(text: string): string {
-  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-}
-
-/**
- * Busca de cidade com sugestões. No protótipo filtra uma lista fixa;
- * no desenvolvimento passa a usar a Open-Meteo Geocoding (debounceTime + switchMap).
- */
+/** Busca de cidade com sugestões. O campo é um FormControl e as sugestões vêm do CityService. */
 @Component({
   selector: 'app-city-search',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Icon, Flag],
+  imports: [ReactiveFormsModule, Icon, Flag],
   host: { class: 'relative block' },
   template: `
     <label class="relative block">
@@ -35,8 +22,9 @@ function normalize(text: string): string {
         [placeholder]="placeholder()"
         class="w-full rounded-2xl border border-slate-200 bg-white py-4 pr-4 pl-12 text-base font-medium text-navy-900 shadow-sm placeholder:font-normal placeholder:text-slate-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 focus:outline-none"
         [class.!py-3]="compact()"
-        [value]="query()"
-        (input)="onInput($any($event.target).value)"
+        maxlength="60"
+        [formControl]="query"
+        (input)="open.set(true)"
         (focus)="open.set(true)"
         (blur)="close()"
         (keydown.escape)="open.set(false)"
@@ -71,25 +59,18 @@ function normalize(text: string): string {
 export class CitySearch {
   readonly placeholder = input('Para onde você vai? Digite uma cidade');
   readonly compact = input(false);
-  readonly initial = input('');
   readonly selected = output<City>();
 
-  protected readonly query = linkedSignal(() => this.initial());
+  private readonly cities = inject(CityService);
+
+  protected readonly query = new FormControl('', { nonNullable: true, validators: Validators.maxLength(60) });
+  private readonly term = toSignal(this.query.valueChanges, { initialValue: '' });
   protected readonly open = signal(false);
 
-  protected readonly suggestions = computed(() => {
-    const q = normalize(this.query());
-    if (q.length < 2) return [];
-    return CIDADES.filter((c) => normalize(c.nome).startsWith(q)).slice(0, 6);
-  });
-
-  protected onInput(value: string) {
-    this.query.set(value);
-    this.open.set(true);
-  }
+  protected readonly suggestions = computed(() => this.cities.search(this.term()));
 
   protected select(city: City) {
-    this.query.set(city.nome);
+    this.query.setValue(city.nome);
     this.open.set(false);
     this.selected.emit(city);
   }

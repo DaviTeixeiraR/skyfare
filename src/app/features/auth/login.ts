@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 import { Icon } from '../../shared/components/icon';
 
 @Component({
@@ -12,6 +13,11 @@ import { Icon } from '../../shared/components/icon';
     <p class="mt-2 text-slate-500">Entre para ver e planejar as suas viagens.</p>
 
     <form class="mt-8 space-y-5" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      @if (error()) {
+        <p role="alert" class="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <app-icon name="circle-alert" [size]="18" class="mt-0.5" /> {{ error() }}
+        </p>
+      }
       <div>
         <label class="label" for="email">E-mail</label>
         <div class="relative">
@@ -25,28 +31,16 @@ import { Icon } from '../../shared/components/icon';
       </div>
 
       <div>
-        <div class="mb-1.5 flex items-center justify-between">
-          <label class="label !mb-0" for="senha">Senha</label>
-          <a href="#" class="text-sm font-semibold text-brand-600 hover:text-brand-700" (click)="$event.preventDefault()">Esqueci a senha</a>
-        </div>
+        <label class="label" for="senha">Senha</label>
         <div class="relative">
           <app-icon name="lock" [size]="18" class="absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
-          <input id="senha" [type]="showPassword() ? 'text' : 'password'" class="input !px-10" placeholder="Sua senha"
-                 formControlName="senha" [class.input-invalid]="invalid('senha')" />
-          <button type="button" class="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'" (click)="showPassword.set(!showPassword())">
-            <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="18" />
-          </button>
+          <input id="senha" type="password" class="input !pl-10" placeholder="Sua senha" formControlName="senha"
+                 [class.input-invalid]="invalid('senha')" />
         </div>
         @if (invalid('senha')) {
           <p class="field-error"><app-icon name="circle-alert" [size]="14" /> A senha é obrigatória.</p>
         }
       </div>
-
-      <label class="flex items-center gap-2 text-sm text-slate-600">
-        <input type="checkbox" class="size-4 rounded border-slate-300 accent-brand-600" formControlName="lembrar" />
-        Manter conectado
-      </label>
 
       <button type="submit" class="btn btn-primary w-full !py-3">Entrar</button>
     </form>
@@ -67,17 +61,17 @@ import { Icon } from '../../shared/components/icon';
 })
 export class Login {
   private readonly router = inject(Router);
-  protected readonly showPassword = signal(false);
+  private readonly auth = inject(AuthService);
+  protected readonly error = signal('');
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     email: ['', [Validators.required, Validators.email]],
     senha: ['', Validators.required],
-    lembrar: [true],
   });
 
   protected invalid(name: 'email' | 'senha') {
     const control = this.form.controls[name];
-    return control.invalid && (control.touched || control.dirty);
+    return control.invalid && control.touched;
   }
 
   protected submit() {
@@ -85,7 +79,11 @@ export class Login {
       this.form.markAllAsTouched();
       return;
     }
-    // A autenticação no JSON-Server entra na etapa de desenvolvimento.
-    this.router.navigateByUrl('/viagens');
+    const { email, senha } = this.form.getRawValue();
+    if (this.auth.login(email, senha)) {
+      this.router.navigateByUrl('/viagens');
+    } else {
+      this.error.set('E-mail ou senha incorretos.');
+    }
   }
 }

@@ -1,4 +1,3 @@
-import { HOJE } from '../mock/mock-data';
 import { Trip } from '../models';
 
 export type TripStatus = 'futura' | 'em-andamento' | 'realizada';
@@ -10,13 +9,20 @@ export function toDate(iso: string): Date {
   return new Date(a, m - 1, d);
 }
 
-export function tripStatus(trip: Trip, hoje = HOJE): TripStatus {
+/** Hoje, sem a hora (para comparar só os dias). */
+export function today(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+export function tripStatus(trip: Trip, hoje = today()): TripStatus {
   if (toDate(trip.dataVolta) < hoje) return 'realizada';
   if (toDate(trip.dataIda) <= hoje) return 'em-andamento';
   return 'futura';
 }
 
-export function daysUntil(iso: string, hoje = HOJE): number {
+export function daysUntil(iso: string, hoje = today()): number {
   return Math.round((toDate(iso).getTime() - hoje.getTime()) / DIA);
 }
 

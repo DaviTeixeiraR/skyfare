@@ -1,5 +1,7 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ExchangeRate } from '../../core/models';
 import { Icon } from './icon';
 import { CardState } from './weather-card';
@@ -8,7 +10,7 @@ import { CardState } from './weather-card';
 @Component({
   selector: 'app-exchange-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Icon, CurrencyPipe, DecimalPipe],
+  imports: [ReactiveFormsModule, Icon, CurrencyPipe, DecimalPipe],
   host: { class: 'block' },
   template: `
     @switch (state()) {
@@ -38,7 +40,7 @@ import { CardState } from './weather-card';
             <p class="flex items-center gap-1.5 text-sm font-semibold text-slate-500">
               <app-icon name="coins" [size]="16" class="text-sun-500" /> Câmbio
             </p>
-            <p class="text-xs text-slate-400">AwesomeAPI</p>
+            <p class="text-xs text-slate-400">Dados de exemplo</p>
           </div>
 
           @if (domestic()) {
@@ -93,8 +95,8 @@ import { CardState } from './weather-card';
                       class="input bg-white"
                       type="number"
                       min="0"
-                      [value]="amount()"
-                      (input)="amount.set(+$any($event.target).value)"
+                      [formControl]="amount"
+                      [class.input-invalid]="amount.invalid"
                     />
                   </label>
                   <app-icon name="arrow-right-left" [size]="16" class="mt-5 text-slate-400" />
@@ -105,6 +107,9 @@ import { CardState } from './weather-card';
                     </p>
                   </div>
                 </div>
+                @if (amount.invalid) {
+                  <p class="field-error"><app-icon name="circle-alert" [size]="14" /> Informe um valor igual ou maior que zero.</p>
+                }
               </div>
             }
           } @else {
@@ -115,7 +120,7 @@ import { CardState } from './weather-card';
               <div>
                 <p class="text-lg font-bold text-navy-900">Moeda sem cotação</p>
                 <p class="mt-1 text-sm text-slate-500">
-                  A AwesomeAPI não tem cotação para a moeda deste país.
+                  Não há cotação cadastrada para a moeda deste país.
                 </p>
               </div>
             </div>
@@ -132,8 +137,12 @@ export class ExchangeCard {
   readonly showConverter = input(false);
   readonly retry = output<void>();
 
-  protected readonly amount = signal(1000);
-  protected readonly converted = computed(() => this.amount() / (this.rate()?.cotacao ?? 1));
+  /** Valor do conversor: obrigatório e não pode ser negativo. */
+  protected readonly amount = new FormControl(1000, [Validators.required, Validators.min(0)]);
+  private readonly amountValue = toSignal(this.amount.valueChanges, { initialValue: 1000 });
+  protected readonly converted = computed(() =>
+    this.amount.valid ? (this.amountValue() ?? 0) / (this.rate()?.cotacao ?? 1) : 0,
+  );
   protected readonly digits = computed(() => ((this.rate()?.cotacao ?? 1) < 0.1 ? '1.4-4' : '1.2-2'));
 
   private readonly points = computed(() => {

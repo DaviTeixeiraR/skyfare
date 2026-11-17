@@ -1,8 +1,12 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { ChartConfiguration } from 'chart.js';
-import { CLIMA, CLIMA_PADRAO, COTACOES, VIAGENS } from '../../core/mock/mock-data';
+import { AuthService } from '../../core/services/auth.service';
+import { ExchangeService } from '../../core/services/exchange.service';
+import { ToastService } from '../../core/services/toast.service';
+import { TripService } from '../../core/services/trip.service';
+import { WeatherService } from '../../core/services/weather.service';
 import {
   daysUntil,
   STATUS_CLASS,
@@ -11,6 +15,7 @@ import {
   tripStatus,
 } from '../../core/utils/trip-utils';
 import { ChartView } from '../../shared/components/chart';
+import { ConfirmDialog } from '../../shared/components/confirm-dialog';
 import { ExchangeCard } from '../../shared/components/exchange-card';
 import { Flag } from '../../shared/components/flag';
 import { ForecastList } from '../../shared/components/forecast-list';
@@ -21,7 +26,18 @@ import { WeatherCard } from '../../shared/components/weather-card';
 @Component({
   selector: 'app-trip-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Flag, Icon, WeatherCard, ExchangeCard, ForecastList, ChartView, CurrencyPipe, DatePipe],
+  imports: [
+    RouterLink,
+    Flag,
+    Icon,
+    WeatherCard,
+    ExchangeCard,
+    ForecastList,
+    ChartView,
+    ConfirmDialog,
+    CurrencyPipe,
+    DatePipe,
+  ],
   template: `
     @if (trip(); as t) {
       <a routerLink="/viagens" class="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-navy-900">
@@ -50,7 +66,9 @@ import { WeatherCard } from '../../shared/components/weather-card';
         }
         <div class="flex gap-2">
           <a [routerLink]="['/viagens', t.id, 'editar']" class="btn btn-secondary"><app-icon name="pencil" [size]="16" /> Editar</a>
-          <button type="button" class="btn btn-danger"><app-icon name="trash" [size]="16" /> Excluir</button>
+          <button type="button" class="btn btn-danger" (click)="confirming.set(true)">
+            <app-icon name="trash" [size]="16" /> Excluir
+          </button>
         </div>
       </header>
 
@@ -106,6 +124,14 @@ import { WeatherCard } from '../../shared/components/weather-card';
           </section>
         </aside>
       </div>
+
+      <app-confirm-dialog
+        [open]="confirming()"
+        heading="Excluir viagem?"
+        [message]="'A viagem para ' + t.cidade + ' será removida da sua lista. Esta ação não pode ser desfeita.'"
+        (confirmed)="remove(t.id, t.cidade)"
+        (cancelled)="confirming.set(false)"
+      />
     } @else {
       <div class="card flex flex-col items-center gap-3 p-12 text-center">
         <p class="font-semibold text-navy-900">Viagem não encontrada</p>
@@ -118,15 +144,39 @@ export class TripDetail {
   /** Vem do parâmetro :id da rota (withComponentInputBinding). */
   readonly id = input<string>('1');
 
+  private readonly auth = inject(AuthService);
+  private readonly trips = inject(TripService);
+  private readonly weatherService = inject(WeatherService);
+  private readonly exchange = inject(ExchangeService);
+  private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
+
   protected readonly statusLabel = STATUS_LABEL;
   protected readonly statusClass = STATUS_CLASS;
+  protected readonly confirming = signal(false);
 
-  protected readonly trip = computed(() => VIAGENS.find((t) => t.id === Number(this.id())) ?? null);
-  protected readonly weather = computed(() => CLIMA[this.trip()?.cityId ?? 0] ?? CLIMA_PADRAO);
-  protected readonly rate = computed(() => COTACOES[this.trip()?.moeda ?? ''] ?? null);
+  /** Só a viagem do próprio usuário é exibida. */
+  protected readonly trip = computed(() =>
+    this.trips.getOwnedBy(Number(this.id()), this.auth.user()?.id ?? 0) ?? null,
+  );
+  protected readonly weather = computed(() => this.weatherService.getByCity(this.trip()?.cityId ?? 0));
+  protected readonly rate = computed(() => this.exchange.getRate(this.trip()?.moeda ?? ''));
   protected readonly status = computed(() => tripStatus(this.trip()!));
   protected readonly duration = computed(() => tripDuration(this.trip()!));
   protected readonly countdown = computed(() => daysUntil(this.trip()!.dataIda));
+
+  protected remove(id: number, cidade: string) {
+    this.trips.remove(id).subscribe({
+      next: () => {
+        this.toast.success(`Viagem para ${cidade} excluída.`);
+        this.router.navigate(['/viagens']);
+      },
+      error: () => {
+        this.confirming.set(false);
+        this.toast.error('Não foi possível excluir a viagem.');
+      },
+    });
+  }
 
   protected readonly chart = computed<ChartConfiguration>(() => {
     const historico = this.rate()?.historico ?? [];

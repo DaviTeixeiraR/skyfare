@@ -1,14 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import {
-  BUSCAS_RECENTES,
-  CIDADES,
-  CLIMA,
-  CLIMA_PADRAO,
-  COTACOES,
-  MOEDA_POR_PAIS,
-} from '../../core/mock/mock-data';
 import { City } from '../../core/models';
+import { CityService } from '../../core/services/city.service';
+import { ExchangeService } from '../../core/services/exchange.service';
+import { WeatherService } from '../../core/services/weather.service';
 import { CitySearch } from '../../shared/components/city-search';
 import { ExchangeCard } from '../../shared/components/exchange-card';
 import { Flag } from '../../shared/components/flag';
@@ -37,37 +32,22 @@ import { WeatherCard } from '../../shared/components/weather-card';
     </section>
 
     <div class="relative z-10 mx-auto -mt-20 max-w-3xl">
-      <app-city-search [initial]="city().nome" (selected)="city.set($event)" />
-      <div class="mt-3 flex flex-wrap items-center gap-2 px-1 text-sm">
-        <span class="flex items-center gap-1 text-slate-500"><app-icon name="history" [size]="15" /> Recentes:</span>
-        @for (name of recent; track name) {
-          <button type="button" (click)="pick(name)"
-                  class="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-600 hover:border-brand-300 hover:text-brand-700"
-                  [class.!border-brand-300]="name === city().nome" [class.!text-brand-700]="name === city().nome">
-            {{ name }}
-          </button>
-        }
-      </div>
+      <app-city-search (selected)="city.set($event)" />
     </div>
 
+    @if (city(); as city) {
     <section class="mt-10">
       <div class="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-3">
-          <app-flag [code]="city().codigoPais" [size]="40" />
+          <app-flag [code]="city.codigoPais" [size]="40" />
           <div>
-            <h2 class="text-2xl font-extrabold tracking-tight text-navy-900">{{ city().nome }}</h2>
+            <h2 class="text-2xl font-extrabold tracking-tight text-navy-900">{{ city.nome }}</h2>
             <p class="flex items-center gap-1 text-sm text-slate-500">
-              <app-icon name="map-pin" [size]="14" /> {{ city().estado }}, {{ city().pais }}
+              <app-icon name="map-pin" [size]="14" /> {{ city.estado }}, {{ city.pais }}
             </p>
           </div>
         </div>
-        <div class="flex gap-2">
-          <button type="button" class="btn btn-secondary" (click)="favorite.set(!favorite())">
-            <app-icon name="star" [size]="17" [fill]="favorite() ? 'currentColor' : 'none'" [class]="favorite() ? 'text-sun-500' : ''" />
-            {{ favorite() ? 'Favorita' : 'Favoritar' }}
-          </button>
-          <a routerLink="/viagens/nova" class="btn btn-primary"><app-icon name="plus" [size]="17" /> Salvar como viagem</a>
-        </div>
+        <a routerLink="/viagens/nova" [queryParams]="{ cidade: city.id }" class="btn btn-primary"><app-icon name="plus" [size]="17" /> Salvar como viagem</a>
       </div>
 
       <div class="grid gap-5 lg:grid-cols-2">
@@ -76,19 +56,18 @@ import { WeatherCard } from '../../shared/components/weather-card';
       </div>
       <app-forecast-list class="mt-5" [days]="weather().diario" />
     </section>
+    }
   `,
 })
 export class Home {
-  protected readonly recent = BUSCAS_RECENTES;
-  protected readonly city = signal<City>(CIDADES[0]);
-  protected readonly favorite = signal(true);
+  private readonly cities = inject(CityService);
+  private readonly weatherService = inject(WeatherService);
+  private readonly exchange = inject(ExchangeService);
 
-  protected readonly weather = computed(() => CLIMA[this.city().id] ?? CLIMA_PADRAO);
-  protected readonly currency = computed(() => MOEDA_POR_PAIS[this.city().codigoPais]);
-  protected readonly rate = computed(() => COTACOES[this.currency()] ?? null);
+  /** Cidade mostrada na tela (começa por Edimburgo). */
+  protected readonly city = signal<City | undefined>(this.cities.getByName('Edimburgo'));
 
-  protected pick(name: string) {
-    const found = CIDADES.find((c) => c.nome === name);
-    if (found) this.city.set(found);
-  }
+  protected readonly weather = computed(() => this.weatherService.getByCity(this.city()!.id));
+  protected readonly currency = computed(() => this.cities.currencyOf(this.city()!.codigoPais));
+  protected readonly rate = computed(() => this.exchange.getRate(this.currency()));
 }

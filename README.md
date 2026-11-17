@@ -8,13 +8,12 @@ Planejador de viagens com previsão do tempo e câmbio. Você pesquisa uma cidad
 
 ## Funcionalidades
 
-- Busca de cidades com autocomplete
+- Busca de cidades com autocomplete (159 cidades de 30 países)
 - Clima atual e previsão de 7 dias
 - Cotação da moeda local em reais, com histórico de 30 dias e conversor de valores
 - Cadastro, listagem, detalhe, edição e exclusão de viagens
 - Dashboard com indicadores e gráficos
 - Login, cadastro de usuário e controle de acesso por perfil (usuário e administrador)
-- Favoritos e histórico de buscas
 
 ## Telas
 
@@ -31,40 +30,68 @@ Planejador de viagens com previsão do tempo e câmbio. Você pesquisa uma cidad
 | 9 | Acesso negado | Pública |
 | 10 | Página não encontrada (404) | Pública |
 
-## APIs
+## Web API (JSON-Server)
 
-| API | Uso |
-|---|---|
-| [Open-Meteo Geocoding](https://open-meteo.com/en/docs/geocoding-api) | Sugestões de cidades, coordenadas e país |
-| [Open-Meteo Forecast](https://open-meteo.com/en/docs) | Clima atual e previsão |
-| [REST Countries](https://restcountries.com) | Moeda, bandeira e continente do país |
-| [AwesomeAPI de Moedas](https://docs.awesomeapi.com.br/api-de-moedas) | Cotação em reais |
-| [JSON-Server](https://github.com/typicode/json-server) | API local para usuários, viagens e favoritos |
+Os dados ficam no arquivo `db.json`, servido pelo [JSON-Server](https://github.com/typicode/json-server) em http://localhost:3000. Os *services* do Angular acessam a API com o `HttpClient`:
 
-As APIs externas são gratuitas e não precisam de chave.
+| Coleção | Service | Requisições |
+|---|---|---|
+| `users` | UserService | GET, POST, PATCH, DELETE |
+| `trips` | TripService | GET, POST, PUT, DELETE |
+| `cities` e `countries` | CityService | GET |
+| `rates` | ExchangeService | GET |
+| `weather` | WeatherService | GET |
+
+O `db.json` tem 30 países, as principais cidades de cada um (159 no total), a moeda e o continente de cada país, 21 cotações e o clima de todas as cidades. O clima e as cotações são **dados de exemplo** (inventados para a demonstração), no formato das APIs [Open-Meteo](https://open-meteo.com) e [AwesomeAPI](https://docs.awesomeapi.com.br/api-de-moedas).
 
 ## Tecnologias
 
-Angular, TypeScript, RxJS, signals, formulários reativos, guards de rota, lazy loading, Chart.js e JSON-Server.
+Angular, TypeScript, HttpClient, RxJS, signals, formulários reativos com Validators, guards de rota, lazy loading, Chart.js e JSON-Server.
 
 ## Como rodar
 
 Requisitos: Node.js 22 ou superior.
 
+Em um terminal, suba a API:
+
 ```bash
 npm install
+npm run api
+```
+
+Em outro terminal, suba o Angular:
+
+```bash
 npm start
 ```
 
-Depois abra http://localhost:4200.
+Depois abra http://localhost:4200. Sem a API rodando, a aplicação abre, mas avisa que não conseguiu carregar os dados.
 
-> **Situação atual (Trabalho 01, protótipo):** as 10 telas já estão prontas em Angular, com dados fictícios (`src/app/core/mock`). A ligação com as APIs, o JSON-Server e os guards de rota fica para a próxima etapa. O guia de estilo está em http://localhost:4200/guia-de-estilo.
+> **Situação atual (Trabalho final):** todos os dados são lidos e gravados na Web API do JSON-Server por meio do `HttpClient`, e todos os formulários são reativos, com `Validators` e mensagens de erro. O cadastro só é enviado ao servidor quando os campos obrigatórios estão preenchidos corretamente. Para voltar aos dados iniciais, rode `git checkout db.json`. O guia de estilo está em http://localhost:4200/guia-de-estilo.
+
+### Login padrão
+
+O login é simples: o e-mail e a senha são conferidos com duas contas fixas no código (`src/app/core/services/auth.service.ts`), sem consultar a API.
+
+| E-mail | Senha | Perfil |
+|---|---|---|
+| skyfareuser@gmail.com | skyfare123 | Administrador |
+| ana.souza@email.com | skyfare123 | Usuário |
+
+O administrador abre todas as telas, inclusive Usuários. Com a conta de usuário, a tela de acesso negado aparece ao abrir `/admin/usuarios`. O cadastro grava a conta na API (aparece na tela de usuários) e já entra com ela, mas depois de sair só as duas contas acima conseguem entrar de novo.
+
+### Testes
+
+```bash
+npm test
+```
 
 ## Estrutura
 
 ```
 src/app/
-  core/        modelos, utilitários e dados fictícios
+  core/        modelos, endereço da API, services (viagens, usuários, login, cidades, câmbio, clima, avisos) e guards
+  app-routing.module.ts / app.routes.ts   rotas da aplicação
   layout/      layout principal (navegação) e de autenticação
   shared/      componentes reutilizáveis (cartões de clima e câmbio, busca, gráficos, ícones)
   features/    telas: auth, home, trips, dashboard, admin, errors, style-guide
@@ -79,6 +106,8 @@ src/app/
 
 - [Trabalho 00: relatório parcial e Kanban](docs/trabalho-00/)
 - [Trabalho 01: protótipo, relatório e Kanban](docs/trabalho-01/)
+- [Trabalho 02: relatório e Kanban](docs/trabalho-02/)
+- [Trabalho final: relatório e Kanban](docs/trabalho-final/)
 
 ## Autor
 

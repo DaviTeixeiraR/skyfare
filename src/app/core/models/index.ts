@@ -7,10 +7,9 @@ export interface User {
   perfil: Perfil;
   ativo: boolean;
   criadoEm: string; // ISO
-  viagens: number;
 }
 
-/** Cidade devolvida pela Open-Meteo Geocoding. */
+/** Cidade da coleção cities. */
 export interface City {
   id: number;
   nome: string;
@@ -46,6 +45,15 @@ export interface Trip {
   observacoes: string;
 }
 
+/** Dados do formulário de viagem. O destino é uma cidade da busca. */
+export interface TripInput {
+  city: City;
+  dataIda: string;
+  dataVolta: string;
+  orcamentoBRL: number;
+  observacoes: string;
+}
+
 export interface CurrentWeather {
   temperatura: number;
   sensacao: number;
@@ -69,7 +77,7 @@ export interface Weather {
   diario: DailyForecast[];
 }
 
-/** Cotação da AwesomeAPI combinada com os dados da moeda da REST Countries. */
+/** Cotação em reais da coleção rates. */
 export interface ExchangeRate {
   codigo: string;
   nome: string;
@@ -78,4 +86,16 @@ export interface ExchangeRate {
   variacao: number; // variação do dia em %
   atualizadoEm: string;
   historico: number[]; // últimos 30 dias
+}
+
+/** Clima de uma cidade na coleção weather (o id é o id da cidade). */
+export interface CityWeather extends Weather {
+  id: number;
+}
+
+/** País na coleção countries: moeda e continente (id = código ISO alfa-2). */
+export interface Country {
+  id: string;
+  moeda: string;
+  continente: Continente;
 }

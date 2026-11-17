@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { COTACOES } from '../../core/mock/mock-data';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ExchangeService } from '../../core/services/exchange.service';
 import { ExchangeCard } from '../../shared/components/exchange-card';
 import { Icon, IconName } from '../../shared/components/icon';
 import { Logo } from '../../shared/components/logo';
@@ -110,7 +110,7 @@ interface Swatch {
   `,
 })
 export class StyleGuide {
-  protected readonly gbp = COTACOES['GBP'];
+  protected readonly gbp = inject(ExchangeService).getRate('GBP');
   protected readonly icons: IconName[] = ['sun', 'cloud-sun', 'cloud-rain', 'cloud-snow', 'wind', 'coins', 'wallet', 'plane-takeoff', 'map-pin', 'calendar'];
   protected readonly swatches: Swatch[] = [
     { name: 'Azul céu', hex: '#1D63F1', use: 'Ações e links', dark: true },
